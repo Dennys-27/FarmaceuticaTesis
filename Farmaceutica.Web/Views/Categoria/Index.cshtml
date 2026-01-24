@@ -1,0 +1,101 @@
+﻿@using Farmaceutica.Core.Enums   // si tu enum está en esa carpeta
+@using Farmaceutica.Core.Entities
+@{
+    ViewData["Title"] = "Categoria Mantenedor";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<!-- start page title -->
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 class="mb-sm-0">Mantenimiento Categoria</h4>
+
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="javascript: void(0);">Categoria</a></li>
+                    <li class="breadcrumb-item active">Categoria</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <button type="button" id="btnnuevo" class="btn btn-primary btn-label waves-effect waves-light rounded-pill"><i class="ri-user-smile-line label-icon align-middle rounded-pill fs-16 me-2"></i> Nuevo Registro</button>
+            </div>
+            <div class="card-body">
+                <table id="table_data" class="table table-bordered dt-responsive nowrap table-striped align-middle" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripcion</th>
+                            <th>Filtro</th>
+                            <th>Estado</th>
+                            <th>FechaCreacion</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="modalmantenimiento" class="modal fade" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lbltitulo"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"> </button>
+            </div>
+
+            <form method="post" id="mantenimiento_form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="cat_id" />
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Nombre Categoria</label>
+                                <input type="text" class="form-control" id="cat_nom" name="Nombre" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="cat_descrip" name="Descripcion" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Filtro</label>
+                                <input type="text" class="form-control" id="cat_fil" name="filter" required />
+                            </div>
+                        </div>
+                    </div>
+                  
+                </div>
+                <div class="modal-footer">
+                    <button type="reset" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section Scripts {
+    <script src="~/js/categoria.js"></script>
+}

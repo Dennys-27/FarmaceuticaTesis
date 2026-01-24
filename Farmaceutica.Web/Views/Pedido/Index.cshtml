@@ -1,0 +1,361 @@
+﻿@{
+    ViewData["Title"] = "Pedido Page";
+    Layout = "~/Views/Shared/_LayoutFarmacia.cshtml";
+}
+<link rel="stylesheet" href="~/css/delivery_ventas.css" />
+<section class="section bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Gestión de Pedidos</h4>
+
+                        <!-- Filtros -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha Inicio</label>
+                                <input type="date" class="form-control" id="fechaInicio">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha Fin</label>
+                                <input type="date" class="form-control" id="fechaFin">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Correo del Cliente</label>
+                                <input type="email" class="form-control" id="correo" placeholder="ejemplo@gmail.com">
+                            </div>
+
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button" id="btnFiltrar" class="btn btn-primary me-2">
+                                    <i class="ri-filter-line me-1"></i> Filtrar
+                                </button>
+                                <button type="button" id="btnLimpiar" class="btn btn-outline-secondary">
+                                    <i class="ri-eraser-line me-1"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla -->
+                        <div class="table-responsive">
+                            <table id="table_data" class="table table-hover table-bordered dt-responsive nowrap w-100">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50">#</th>
+                                        <th>Cliente</th>
+                                        <th width="120">Tipo Venta</th>
+                                        <th>Correo</th>
+                                        <th>Dirección</th>
+                                        <th width="100">RUC</th>
+                                        <th width="120">Teléfono</th>
+                                        <th width="100" class="text-end">IGV</th>
+                                        <th width="120" class="text-end">Subtotal</th>
+                                        <th width="120" class="text-end">Total</th>
+                                        <th>Repartidor</th>
+                                        <th width="120">Fecha Compra</th>
+                                        <th width="130">Estado</th>
+                                        <th width="120" class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los datos se cargarán automáticamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal 1: Asignar Delivery (está bien) -->
+<!-- Modal 1: Asignar Delivery -->
+<div id="modalmantenimiento" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="lbltitulo">Estado del Delivery</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="mantenimiento_form" method="post">
+
+                <div class="modal-body">
+
+                    <input type="hidden" id="venta_id" name="VentaId">
+
+
+                    <div class="mb-3">
+                        <label for="select_estado" class="form-label">Seleccionar Estado</label>
+                        <select id="select_estado" class="form-select" name="EstadoDelivery">
+                            <option value="4"><span class="badge bg-success">Entregado</span> Entregado</option>
+                            <option value="5"><span class="badge bg-danger">Rechazado</span> Rechazado</option>
+                        </select>
+                    </div>
+
+                    <div id="msg_delivery" class="alert d-none"></div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardar">Asignar Delivery</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Detalle de Venta (CORREGIDO) -->
+<div id="modalDetalleVenta" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+
+            <!-- Encabezado mejorado -->
+            <div class="modal-header bg-primary text-white">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-receipt me-2 fs-4"></i>
+                    <h5 class="modal-title mb-0 fw-bold">Detalle de la Venta</h5> <!-- CORREGIDO: quité text-dark -->
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+
+                <!-- Card de información del cliente -->
+                <div class="card border-primary mb-4 shadow-sm">
+                    <div class="card-header bg-light-primary border-primary">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-circle text-primary me-2"></i>
+                            <h6 class="mb-0 fw-bold text-primary">Información del Cliente</h6>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-person-badge text-muted me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Cliente</small>
+                                        <span id="d_cliente" class="fw-semibold">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-envelope text-muted me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Correo Electrónico</small>
+                                        <span id="d_correo" class="fw-semibold">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-telephone text-muted me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Teléfono</small>
+                                        <span id="d_telefono" class="fw-semibold">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-geo-alt text-muted me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Dirección</small>
+                                        <span id="d_direccion" class="fw-semibold">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-card-text text-muted me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">RUC</small>
+                                        <span id="d_ruc" class="fw-semibold">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card de productos con diseño mejorado -->
+                <div class="card border-success mb-4 shadow-sm">
+                    <div class="card-header bg-light-success border-success">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-cart-check text-success me-2"></i>
+                                <h6 class="mb-0 fw-bold text-success">Productos de la Venta</h6>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success">
+                                <span id="cantidadProductos">0</span> productos
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center" width="80px">
+                                            <i class="bi bi-image"></i>
+                                        </th>
+                                        <th class="ps-3">Producto</th>
+                                        <th class="text-center" width="120px">Cantidad</th>
+                                        <th class="text-end" width="150px">Precio Unitario</th>
+                                        <th class="text-end" width="150px">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detalle_body" class="border-top-0">
+                                    <!-- Los datos se cargarán aquí -->
+                                    <tr id="loadingRow">
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Cargando...</span>
+                                            </div>
+                                            <p class="mt-2 text-muted">Cargando productos...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card de resumen financiero -->
+                <div class="card border-info shadow-sm">
+                    <div class="card-header bg-light-info border-info">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-cash-coin text-info me-2"></i>
+                            <h6 class="mb-0 fw-bold text-info">Resumen Financiero</h6>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row justify-content-end">
+                            <div class="col-md-6 col-lg-5">
+                                <div class="bg-light p-3 rounded">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">Subtotal:</span>
+                                        <span id="d_subtotal" class="fw-bold">S/ 0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">IGV (18%):</span>
+                                        <span id="d_igv" class="fw-bold text-warning">S/ 0.00</span>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted fs-5">Total:</span>
+                                        <span id="d_total" class="fs-4 fw-bold text-success">S/ 0.00</span>
+                                    </div>
+                                </div>
+
+                                <!-- Información adicional -->
+                                <div class="mt-3">
+                                    <div class="alert alert-info alert-dismissible fade show py-2" role="alert">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            <small>
+                                                Este total incluye impuestos y cargos aplicables.
+                                                Para más detalles contacte con el departamento de contabilidad.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer mejorado -->
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary d-flex align-items-center" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary d-flex align-items-center" onclick="imprimirDetalle()">
+                    <i class="bi bi-printer me-1"></i> Imprimir
+                </button>
+                <button type="button" class="btn btn-success d-flex align-items-center" onclick="exportarPDF()">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Exportar PDF
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/pedidos_por_usuario.js"></script>
+}
+
+
+<style>
+    /* Estilos específicos para la tabla */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 1rem;
+    }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 1rem !important;
+        color: #6c757d;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        padding-top: 1rem !important;
+    }
+
+    .dataTables_wrapper .paginate_button {
+        border-radius: 0.375rem !important;
+        margin: 0 2px !important;
+    }
+
+        .dataTables_wrapper .paginate_button.current {
+            background: #405189 !important;
+            border-color: #405189 !important;
+            color: white !important;
+        }
+
+    .table thead th {
+        background-color: #f3f6f9;
+        border-bottom: 2px solid #405189;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        color: #405189;
+    }
+
+    .table tbody td {
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(64, 81, 137, 0.04);
+    }
+
+    .badge {
+        font-size: 0.75em;
+        padding: 0.4em 0.8em;
+        font-weight: 500;
+    }
+
+    .btn-group-sm > .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+</style>

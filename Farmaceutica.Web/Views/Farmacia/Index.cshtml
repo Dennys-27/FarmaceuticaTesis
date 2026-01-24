@@ -1,0 +1,609 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    Layout = "~/Views/Shared/_LayoutFarmacia.cshtml";
+}
+
+<section class="section bg-light">
+    
+    <div class="container">
+
+        <!-- FILTROS Y BUSCADOR -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <input type="text" id="buscador-productos" class="form-control" placeholder="Buscar producto">
+            </div>
+            <div class="col-md-3">
+                <select id="filtro-categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="number" id="precio-min" class="form-control" placeholder="Precio min">
+            </div>
+            <div class="col-md-3">
+                <input type="number" id="precio-max" class="form-control" placeholder="Precio max">
+            </div>
+        </div>
+
+        <!-- CONTENEDOR DE PRODUCTOS -->
+        <div class="row" id="productos-container">
+            <!-- Las tarjetas se generan aquí -->
+        </div>
+
+        <!-- PAGINACIÓN -->
+        <div class="row mt-3">
+            <div class="col text-center">
+                <button id="prev-page" class="btn btn-secondary me-2">Anterior</button>
+                <span id="pagina-actual">1</span>
+                <button id="next-page" class="btn btn-secondary ms-2">Siguiente</button>
+            </div>
+        </div>
+
+    </div><!-- end container -->
+</section>
+
+<!-- Carrito flotante -->
+<button id="carrito-flotante" class="btn btn-primary position-fixed"
+        style="bottom:20px; right:20px; border-radius:50%; width:60px; height:60px; font-size:20px; z-index:999;">
+    🛒 <span id="cantidad-carrito" class="badge bg-danger">0</span>
+</button>
+
+<!-- Modal de carrito -->
+<div class="modal fade" id="modal-carrito" tabindex="-1" aria-labelledby="modalCarritoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <!-- Más grande -->
+        <div class="modal-content">
+            <!-- Encabezado -->
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalCarritoLabel">🛒 Tu Carrito</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <!-- Cuerpo -->
+            <div class="modal-body">
+                <div class="row g-4">
+                    <!-- 🧾 Tabla de productos -->
+                    <div class="col-lg-7">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle text-center" id="tabla-carrito-modal">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>Unidad</th>
+                                        <th>Subtotal</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Productos se agregarán aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Datos personales del cliente: </p>
+                            <div class="live-preview">
+                                <div class="row align-items-center g-3">
+                                    <div class="col-lg-4">
+                                        <label for="cli_id" class="form-label">Cliente</label>
+                                        <select class="form-select" id="cli_id">
+                                            <option value="0" selected>Seleccione</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="cli_ruc" class="form-label">RUC</label>
+                                        <input type="text" class="form-control" id="cli_ruc" readonly>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="cli_direcc" class="form-label">Dirección</label>
+                                        <input type="text" class="form-control" id="cli_direcc" readonly>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label for="cli_correo" class="form-label">Correo</label>
+                                        <input type="text" class="form-control" id="cli_correo" readonly>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label for="cli_telf" class="form-label">Teléfono</label>
+                                        <input type="text" class="form-control" id="cli_telf" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🚚 Opciones de delivery -->
+                    <div class="col-lg-5">
+                        <h6 class="fw-bold mb-2">Opciones de Delivery</h6>
+                        <div class="d-flex flex-wrap justify-content-between">
+                            <div class="card text-center p-3 flex-fill m-1 delivery-option" data-time="30 min" style="cursor:pointer;">
+                                <img src="~/images/users/avatar-3.jpg" class="rounded-circle mx-auto mb-2" width="60" height="60" alt="Express">
+                                <p class="mb-0 fw-bold">🚀 Express</p>
+                                <small>30 min</small>
+                            </div>
+                            <div class="card text-center p-3 flex-fill m-1 delivery-option" data-time="1 hora" style="cursor:pointer;">
+                                <img src="~/images/users/avatar-9.jpg" class="rounded-circle mx-auto mb-2" width="60" height="60" alt="Rápido">
+                                <p class="mb-0 fw-bold">🚚 Rápido</p>
+                                <small>1 hora</small>
+                            </div>
+                            <div class="card text-center p-3 flex-fill m-1 delivery-option" data-time="2-3 horas" style="cursor:pointer;">
+                                <img src="~/images/users/avatar-8.jpg" class="rounded-circle mx-auto mb-2" width="60" height="60" alt="Normal">
+                                <p class="mb-0 fw-bold">🛵 Normal</p>
+                                <small>2-3 horas</small>
+                            </div>
+                        </div>
+
+                        <!-- 🔐 Estado o registro -->
+                        <div class="mt-4 border rounded p-3 bg-light">
+                            <p class="mb-2">
+                                No podrás realizar un pedido si no tienes una cuenta creada.
+                                <a href="@Url.Action("Registro", "Acceso")" target="_blank">Registra tu cuenta</a>.
+                            </p>
+                           
+                            <div class="input-group">
+                                <input type="text" id="usuarioConsulta" class="form-control" placeholder="Ingresa tu correo o teléfono">
+                                <button type="button" id="btnConsultarEstado" class="btn btn-primary">Verificar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 💰 Total -->
+                <div class="mt-4">
+                    <div class="row text-end">
+                        <div class="col-8 text-end fw-semibold">Sub Total:</div>
+                        <div class="col-4 text-end">$<span id="subtotal-carrito">0.00</span></div>
+                    </div>
+                    <div class="row text-end">
+                        <div class="col-8 text-end fw-semibold">IGV (18%):</div>
+                        <div class="col-4 text-end">$<span id="igv-carrito">0.00</span></div>
+                    </div>
+                    <div class="row text-end border-top mt-2 pt-2">
+                        <div class="col-8 text-end fw-bold">Total:</div>
+                        <div class="col-4 text-end fw-bold">$<span id="total-carrito">0.00</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Pie -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="vaciar-carrito">Vaciar Carrito</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-success" id="btn-pagar">Pagar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        let productos = [];
+        let productosFiltrados = [];
+        let paginaActual = 1;
+        const productosPorPagina = 8;
+        let carrito = {}; // {id: {nombre, precio, cantidad}}
+
+        // Cargar productos desde backend
+        async function cargarProductos() {
+            try {
+                const response = await fetch('@Url.Action("Listar", "Farmacia")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                productos = await response.json();
+
+                llenarCategorias();
+                aplicarFiltros();
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al cargar los productos desde el servidor.'
+                });
+                console.error(error);
+            }
+        }
+
+        // Llenar select de categorías
+        function llenarCategorias() {
+            const categorias = [...new Set(productos.map(p => p.categoria))];
+            const select = document.getElementById('filtro-categoria');
+            categorias.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                select.appendChild(option);
+            });
+        }
+
+        // Aplicar filtros y búsqueda
+        function aplicarFiltros() {
+            const buscador = document.getElementById('buscador-productos').value.toLowerCase();
+            const categoria = document.getElementById('filtro-categoria').value;
+            const precioMin = parseFloat(document.getElementById('precio-min').value) || 0;
+            const precioMax = parseFloat(document.getElementById('precio-max').value) || Infinity;
+
+            productosFiltrados = productos.filter(p =>
+                p.nombre.toLowerCase().includes(buscador) &&
+                (categoria === '' || p.categoria === categoria) &&
+                p.precio >= precioMin &&
+                p.precio <= precioMax
+            );
+
+            paginaActual = 1;
+            mostrarProductos();
+        }
+
+        // Mostrar productos por página
+        function mostrarProductos() {
+            const container = document.getElementById('productos-container');
+            container.innerHTML = '';
+
+            const inicio = (paginaActual - 1) * productosPorPagina;
+            const fin = inicio + productosPorPagina;
+            const paginaProductos = productosFiltrados.slice(inicio, fin);
+
+            paginaProductos.forEach(producto => {
+                const div = document.createElement('div');
+                div.className = 'col-lg-3 col-md-6 mb-4';
+                div.innerHTML = `
+                    <div class="card product-card shadow-sm card-animate position-relative overflow-hidden">
+                        <span class="badge bg-success position-absolute top-0 start-0 m-2">🚚 Envío Gratis</span>
+                        <div class="bookmark-icon position-absolute top-0 end-0 p-2">
+                            <button type="button" class="btn btn-icon btn-light rounded-circle shadow-sm" data-bs-toggle="button" aria-pressed="false">
+                                <i class="mdi mdi-heart-outline fs-16 text-danger"></i>
+                            </button>
+                        </div>
+                        <img src="/images/users/${producto.imagen}" class="card-img-top" alt="${producto.nombre}" style="transition: transform .3s;">
+                        <div class="overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-25 opacity-0 hover-opacity-100 transition"></div>
+                        <div class="card-body text-center">
+                            <h4 class="card-title fw-bold mb-1">${producto.nombre}</h4>
+                            <p class="text-muted mb-1"><i class="mdi mdi-tag-outline me-1"></i>${producto.categoria}</p>
+                            <div class="mb-2">
+                                <span class="badge bg-primary me-1">${producto.subCategoria}</span>
+                            </div>
+                            <p class="fw-bold fs-5 mb-3">$${producto.precio}</p>
+                            <button type="button" class="btn btn-primary w-100 btn-lg agregar-producto"
+                                data-id="${producto.id}"
+                                data-nombre="${producto.nombre}"
+                                data-precio="${producto.precio}">
+                                <i class="mdi mdi-cart-plus-outline me-2"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('pagina-actual').textContent = paginaActual;
+        }
+
+        // Navegación de páginas
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if(paginaActual > 1) {
+                paginaActual--;
+                mostrarProductos();
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            if(paginaActual * productosPorPagina < productosFiltrados.length) {
+                paginaActual++;
+                mostrarProductos();
+            }
+        });
+
+        // Eventos de filtros
+        document.getElementById('buscador-productos').addEventListener('input', aplicarFiltros);
+        document.getElementById('filtro-categoria').addEventListener('change', aplicarFiltros);
+        document.getElementById('precio-min').addEventListener('input', aplicarFiltros);
+        document.getElementById('precio-max').addEventListener('input', aplicarFiltros);
+
+        // Carrito flotante
+        function actualizarCarritoFlotante() {
+            const totalItems = Object.values(carrito).reduce((sum, p) => sum + p.cantidad, 0);
+            document.getElementById('cantidad-carrito').textContent = totalItems;
+        }
+
+        function actualizarTotalModal() {
+            let subtotal = 0;
+            Object.values(carrito).forEach(item => subtotal += item.precio * item.cantidad);
+
+            const igv = subtotal * 0.18;
+            const total = subtotal + igv;
+
+            document.getElementById("subtotal-carrito").textContent = subtotal.toFixed(2);
+            document.getElementById("igv-carrito").textContent = igv.toFixed(2);
+            document.getElementById("total-carrito").textContent = total.toFixed(2);
+        }
+
+        function mostrarModalCarrito() {
+            const tbody = document.querySelector('#tabla-carrito-modal tbody');
+            tbody.innerHTML = '';
+
+            Object.entries(carrito).forEach(([id, producto]) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${producto.nombre}</td>
+                    <td>$${producto.precio.toFixed(2)}</td>
+                    <td><input type="number" class="form-control cantidad-modal text-center" value="${producto.cantidad}" min="1" data-id="${id}" style="width:80px;"></td>
+                    <td>
+                        <select class="form-select form-select-sm" id="und_id_${id}">
+                            <option value="0" selected>Seleccione</option>
+                            <option value="1">Unidad</option>
+                            <option value="2">Tableta</option>
+                            <option value="3">Caja</option>
+                            <option value="4">Tarro</option>
+                        </select>
+                    </td>
+                    <td class="subtotal-modal">$${(producto.precio * producto.cantidad).toFixed(2)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-danger btn-eliminar" data-id="${id}">
+                            <i class="mdi mdi-delete-outline text-white"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            actualizarTotalModal();
+
+            // Eliminar producto
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    eliminarProductoDelCarrito(id);
+                });
+            });
+        }
+
+        function eliminarProductoDelCarrito(id) {
+            delete carrito[id];
+            actualizarCarritoFlotante();
+            mostrarModalCarrito();
+        }
+
+        // Agregar producto al carrito
+        document.getElementById('productos-container').addEventListener('click', function(e) {
+            if(e.target.closest('.agregar-producto')) {
+                const btn = e.target.closest('.agregar-producto');
+                const id = btn.dataset.id;
+                const nombre = btn.dataset.nombre;
+                const precio = parseFloat(btn.dataset.precio);
+
+                if(carrito[id]) {
+                    carrito[id].cantidad += 1;
+                } else {
+                    carrito[id] = { nombre, precio, cantidad: 1 };
+                }
+
+                actualizarCarritoFlotante();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Producto agregado',
+                    text: `${nombre} se agregó al carrito.`,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+        });
+
+        // Abrir modal carrito
+        document.getElementById('carrito-flotante').addEventListener('click', function() {
+            mostrarModalCarrito();
+            const modal = new bootstrap.Modal(document.getElementById('modal-carrito'));
+            modal.show();
+        });
+
+        // Actualizar cantidad en el modal
+        document.querySelector('#tabla-carrito-modal tbody').addEventListener('input', function(e) {
+            if(e.target.classList.contains('cantidad-modal')) {
+                const id = e.target.dataset.id;
+                const cantidad = parseInt(e.target.value);
+                if(cantidad < 1) return;
+                carrito[id].cantidad = cantidad;
+                const fila = e.target.closest('tr');
+                fila.querySelector('.subtotal-modal').textContent = '$' + (carrito[id].precio * cantidad).toFixed(2);
+                actualizarCarritoFlotante();
+                actualizarTotalModal();
+            }
+        });
+
+        // Vaciar carrito
+        document.getElementById('vaciar-carrito').addEventListener('click', function() {
+            carrito = {};
+            actualizarCarritoFlotante();
+            mostrarModalCarrito();
+            Swal.fire({
+                icon: 'info',
+                title: 'Carrito vaciado',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+
+        // Consultar cliente
+        document.getElementById("btnConsultarEstado").addEventListener("click", async () => {
+            const usuario = document.getElementById("usuarioConsulta").value.trim();
+
+            if (!usuario) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Campo vacío",
+                    text: "Por favor ingresa tu correo o teléfono."
+                });
+                return;
+            }
+
+            try {
+                const response = await fetch("/Clientes/BuscarCliente", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usuario })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const c = result.data;
+
+                    document.getElementById("cli_id").innerHTML = `<option value="${c.cli_id}" selected>${c.cli_nombre}</option>`;
+                    document.getElementById("cli_ruc").value = c.cli_ruc || "";
+                    document.getElementById("cli_direcc").value = c.cli_direcc || "";
+                    document.getElementById("cli_correo").value = c.cli_correo || "";
+                    document.getElementById("cli_telf").value = c.cli_telf || "";
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Cliente encontrado",
+                        text: `Bienvenido ${c.cli_nombre}`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "No encontrado",
+                        text: "No se encontró un cliente con esos datos."
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Ocurrió un problema al consultar los datos."
+                });
+                console.error(error);
+            }
+        });
+
+        // Seleccionar tipo de delivery
+        let deliverySeleccionado = null;
+        document.querySelectorAll('.delivery-option').forEach(card => {
+            card.addEventListener('click', function () {
+                document.querySelectorAll('.delivery-option').forEach(c => c.classList.remove('border-primary', 'shadow'));
+                this.classList.add('border-primary', 'shadow');
+                deliverySeleccionado = this.querySelector('p').textContent.trim();
+            });
+        });
+
+            // Botón pagar
+    document.getElementById("btn-pagar").addEventListener("click", async function () {
+        if (Object.keys(carrito).length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Carrito vacío",
+                text: "Agrega productos antes de continuar con el pago."
+            });
+            return;
+        }
+
+        const clienteId = parseInt(document.getElementById("cli_id").value);
+        const cli_ruc = document.getElementById("cli_ruc").value.trim();
+        const cli_direcc = document.getElementById("cli_direcc").value.trim();
+        const cli_correo = document.getElementById("cli_correo").value.trim();
+
+        if (!clienteId || clienteId === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Cliente no seleccionado",
+                text: "Debes ingresar o buscar un cliente antes de registrar la venta."
+            });
+            return;
+        }
+
+        // 🧾 Detalles de productos
+        const detalles = Object.entries(carrito).map(([id, p]) => {
+            const unidadSelect = document.getElementById(`und_id_${id}`);
+            const unidad = unidadSelect ? parseInt(unidadSelect.value) : 1;
+            const cantidad = parseInt(p.cantidad);
+            const precio = parseFloat(p.precio);
+            const total = cantidad * precio;
+
+            return {
+                id: 0, // ⚡ Muy importante: evita error de identity insert
+                productoId: parseInt(id),
+                cantidad,
+                precio,
+                totalVenta: total,
+                unidad: unidad
+            };
+        });
+
+        // 💰 Totales
+        const subtotal = detalles.reduce((sum, d) => sum + d.totalVenta, 0);
+        const igv = subtotal * 0.12;
+        const total = subtotal + igv;
+
+        // 🧩 Objeto Venta según modelo C#
+        const venta = {
+            encargadoId: parseInt(1), // Aquí coloca el ID real del usuario logueado
+            clienteId,
+            cliRuc: cli_ruc,
+            cliDireccion: cli_direcc,
+            cliCorreo: cli_correo,
+            metodoPago: 1, // 1 = Efectivo
+            moneda: 1, // 1 = Dólar
+            unidad: 1,
+            documentoTipo: 2, // 2 = Factura
+            subtotal,
+            igv,
+            total,
+            comentario: "Venta desde tienda web",
+            isActive: 1,
+            fechaCreacion: new Date().toISOString(),
+            detalleVentas: detalles
+        };
+
+        console.log("📦 Enviando venta:", venta);
+
+        try {
+            const response = await fetch("/Venta/RegistrarVenta", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(venta)
+            });
+
+            const result = await response.json();
+
+            if (result.success || result.message?.includes("registrada")) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Venta registrada",
+                    text: "La venta se ha registrado correctamente.",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                // 🧹 Limpiar carrito y cerrar modal
+                carrito = {};
+                actualizarCarritoFlotante();
+                const modal = bootstrap.Modal.getInstance(document.getElementById("modal-carrito"));
+                if (modal) modal.hide();
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error al registrar venta",
+                    text: result.message || "Hubo un problema al guardar la venta."
+                });
+            }
+        } catch (error) {
+            console.error("Error al registrar venta:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error de conexión",
+                text: "Ocurrió un problema al enviar los datos al servidor."
+            });
+        }
+    });
+
+
+        // Carga inicial
+        cargarProductos();
+    });
+</script>
+

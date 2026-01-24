@@ -1,0 +1,205 @@
+﻿@using System.Security.Claims
+
+@{
+    var usuRol = User.FindFirst(ClaimTypes.Role)?.Value ?? "Cliente"; // valor por defecto si algo falla
+}
+
+<!-- ========== App Menu ========== -->
+<div class="app-menu navbar-menu">
+    <!-- LOGO -->
+    <div class="navbar-brand-box">
+        <!-- Dark Logo-->
+        <a href="index.html" class="logo logo-dark">
+            <span class="logo-sm">
+                <img src="~/images/logo-sm.png" alt="" height="22">
+            </span>
+            <span class="logo-lg">
+                <img src="~/images/logo-dark.png" alt="" height="17">
+            </span>
+        </a>
+        <!-- Light Logo-->
+        <a href="index.html" class="logo logo-light">
+            <span class="logo-sm">
+                <img src="~/images/logo-sm.png" alt="" height="22">
+            </span>
+            <span class="logo-lg">
+                <img src="~/images/logo-light.png" alt="" height="17">
+            </span>
+        </a>
+        <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
+            <i class="ri-record-circle-line"></i>
+        </button>
+    </div>
+
+    <div id="scrollbar">
+        <div class="container-fluid">
+
+            <div id="two-column-menu"></div>
+
+            <ul class="navbar-nav" id="navbar-nav">
+                
+
+                <!-- Dashboard visible para todos -->
+                @if (usuRol == "Encargado")
+                {
+                    <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Dashboard")">
+                            <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Dashboards</span>
+                        </a>
+                    </li>
+                }
+                @if (usuRol == "Encargado")
+                {
+                    <!-- Inventario visible para todos -->
+                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">Inventario</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Compra")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Mant. Inventario</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Compras", "Compra")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Lista Inventarios</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Reporte", "Compra")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Reporte Inventario</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Proveedor")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Proveedores</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Producto")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Productos</span>
+                        </a>
+                    </li>
+                    <!-- Ventas visible para todos -->
+                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Ventas</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Venta")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Mant. Ventas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Ventas", "Venta")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Lista Ventas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Reporte", "Venta")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Reporte Ventas</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Clientes")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Clientes</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Categoria")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Categorias</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "SubCategoria")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">SubCategorias</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Encargado")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Encargado</span>
+                        </a>
+                    </li>
+                    <!-- Delivery visible para todos -->
+                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Delivery</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("VentasDelivery", "Delivery")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Deliverys</span>
+                        </a>
+                    </li>
+                    
+                   
+
+                }
+                @if (usuRol == "Delivery")
+                {
+                    <!-- Delivery visible para todos -->
+                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Delivery</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("VentasDeliveryPorId", "Delivery")" ">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Historial de Entregas</span>
+                        </a>
+                    </li>
+                }
+
+                @if (usuRol == "Cliente")
+                {
+                    <!-- Delivery visible para todos -->
+                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Clientes</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Pedidos", "Pedido")" ">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Historial de Compras</span>
+                        </a>
+                    </li>
+                }
+                <!-- Mantenimientos solo visible para Administrador -->
+                @if (usuRol == "Administrador")
+                {
+                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Mantenimientos</span></li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Usuarios")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Usuarios</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Proveedor")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Proveedores</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Clientes")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Delivery")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Deliverys</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Encargado")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Encargado</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Categoria")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Categorias</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "SubCategoria")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">SubCategorias</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="@Url.Action("Index", "Producto")">
+                            <i class="ri-honour-line"></i> <span data-key="t-widgets">Productos</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+        <!-- Sidebar -->
+    </div>
+
+    <div class="sidebar-background"></div>
+</div>

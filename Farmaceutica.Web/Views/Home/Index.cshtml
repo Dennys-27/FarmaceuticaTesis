@@ -1,0 +1,79 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!-- start hero section -->
+<section class="section nft-hero" id="hero">
+    <div class="bg-overlay"></div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-sm-10">
+                <div class="text-center">
+                    <h1 class="display-4 fw-medium mb-4 lh-base text-white">
+                        Plataforma Integral para <span class="text-success">Farmacia Ileana</span>
+                    </h1>
+                    <p class="lead text-white-50 lh-base mb-4 pb-2">
+                        Gestiona inventario, ventas y servicios comunitarios de manera eficiente en la Isla Puná.
+                        Optimiza tus operaciones y mejora la atención a tus clientes con nuestra plataforma.
+                    </p>
+                </div>
+            </div><!--end col-->
+        </div><!-- end row -->
+    </div><!-- end container -->
+</section><!-- end hero section -->
+
+
+<!-- start nosotros -->
+<section class="section" id="nosotros">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-5">
+                    <h2 class="mb-3 fw-semibold lh-base">Sobre Farmacia Ileana</h2>
+                    <p class="text-muted">
+                        Farmacia Ileana en la Isla Puná se dedica a brindar productos farmacéuticos de calidad,
+                        atención personalizada y servicios comunitarios que promueven la salud y bienestar de todos nuestros clientes.
+                    </p>
+                </div>
+            </div><!-- end col -->
+        </div><!-- end row -->
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card text-center border shadow-none">
+                    <div class="card-body py-5 px-4">
+                        <img src="~/images/about/mission.png" alt="Misión" height="55" class="mb-3 pb-2">
+                        <h5>Misión</h5>
+                        <p class="text-muted pb-1">
+                            Brindar productos y servicios farmacéuticos de alta calidad, asegurando la satisfacción y el bienestar de la comunidad de la Isla Puná.
+                        </p>
+                    </div>
+                </div>
+            </div><!-- end col -->
+            <div class="col-lg-4">
+                <div class="card text-center border shadow-none">
+                    <div class="card-body py-5 px-4">
+                        <img src="~/images/about/vision.png" alt="Visión" height="55" class="mb-3 pb-2">
+                        <h5>Visión</h5>
+                        <p class="text-muted pb-1">
+                            Ser reconocidos como la farmacia líder en la región, ofreciendo atención confiable, productos de calidad y apoyo a la comunidad.
+                        </p>
+                    </div>
+                </div>
+            </div><!-- end col -->
+            <div class="col-lg-4">
+                <div class="card text-center border shadow-none">
+                    <div class="card-body py-5 px-4">
+                        <img src="~/images/about/services.png" alt="Servicios" height="55" class="mb-3 pb-2">
+                        <h5>Servicios</h5>
+                        <p class="text-muted pb-1">
+                            Venta de medicamentos, asesoría farmacéutica, delivery de productos y programas de salud comunitarios adaptados a cada cliente.
+                        </p>
+                    </div>
+                </div>
+            </div><!-- end col -->
+        </div><!-- end row -->
+    </div><!-- end container -->
+</section><!-- end nosotros -->
+@Html.Partial("Productos")
+@Html.Partial("Contacto")

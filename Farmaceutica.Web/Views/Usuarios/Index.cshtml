@@ -1,0 +1,146 @@
+﻿@using Farmaceutica.Core.Enums   // si tu enum está en esa carpeta
+@using Farmaceutica.Core.Entities
+@{
+    ViewData["Title"] = "Usuarios Mantenedor";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<!-- start page title -->
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 class="mb-sm-0">Mantenimiento Usuarios</h4>
+
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="javascript: void(0);">Usuario</a></li>
+                    <li class="breadcrumb-item active">Usuarios</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <button type="button" id="btnnuevo" class="btn btn-primary btn-label waves-effect waves-light rounded-pill"><i class="ri-user-smile-line label-icon align-middle rounded-pill fs-16 me-2"></i> Nuevo Registro</button>
+            </div>
+            <div class="card-body">
+                <table id="table_data" class="table table-bordered dt-responsive nowrap table-striped align-middle" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Correo</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Telefono</th>
+                            <th>Contraseña</th>
+                            <th>Rol</th>
+                            <th>FechaCreacion</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="modalmantenimiento" class="modal fade" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lbltitulo"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"> </button>
+            </div>
+
+            <form method="post" id="mantenimiento_form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="usu_id" />
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Nombre Usuario</label>
+                                <input type="text" class="form-control" id="usu_usu" name="UsuarioNombre" required />
+                            </div> 
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="usu_correo" name="Email" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="usu_nom" name="Nombre" required />
+                            </div>
+                        </div>
+                     </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="usu_ape" name="Apellido" required />
+                            </div>
+                        </div>
+                     </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                        <label class="form-label">Rol</label>
+                        <select class="form-control form-select" name="Rol" id="rol_id">
+                            <option value="">Seleccionar</option>
+                            @foreach (var rol in Enum.GetValues(typeof(RolUsuario)))
+                            {
+                                <option value="@((int)rol)">@rol</option>
+                            }
+                        </select>
+                    </div>
+                    </div>
+                    
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label for="valueInput" class="form-label">Imagen</label>
+                                <input type="file" class="form-control" id="usu_img" name="imagen" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <br>
+
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div class="text-center">
+                                <a id="btnremovephoto" class="btn btn-danger btn-icon waves-effect waves-light btn-sm"><i class="ri-delete-bin-5-line"></i></a>
+                                <div class="profile-user position-relative d-inline-block mx-auto  mb-4">
+                                    <span id="pre_imagen"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="reset" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section Scripts {
+    <script src="~/js/usuario.js"></script>
+}

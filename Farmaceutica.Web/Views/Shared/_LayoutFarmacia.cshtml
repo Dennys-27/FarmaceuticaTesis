@@ -1,0 +1,186 @@
+﻿<!doctype html>
+<html lang="en" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-sidebar-image="none">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Farmacéutica</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="Farmaceutica Landing" name="description" />
+    <meta content="TuNombre" name="author" />
+    <link rel="shortcut icon" href="~/images/favicon.ico" />
+    <!--datatable css-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+    <!--datatable responsive css-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Sweet Alert css-->
+    <link href="~/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+    <!-- jsvectormap css -->
+    <link href="~/libs/jsvectormap/css/jsvectormap.min.css" rel="stylesheet" type="text/css" />
+    <!--Swiper slider css-->
+    <link href="~/libs/swiper/swiper-bundle.min.css" rel="stylesheet" />
+
+    <!-- Layout config Js -->
+    <script src="~/js/layout.js"></script>
+    <!-- Bootstrap Css -->
+    <link href="~/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Icons Css -->
+    <link href="~/css/icons.min.css" rel="stylesheet" />
+    <!-- App Css-->
+    <link href="~/css/app.min.css" rel="stylesheet" />
+    <!-- custom Css-->
+    <link href="~/css/custom.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#navbar-example">
+
+    <div class="layout-wrapper landing">
+        <!-- Navbar -->
+        <!-- Banner promocional separado -->
+        <section class="bg-info py-4 shadow-sm" style="margin-top: 0; z-index: 1; position: relative;">
+            <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between">
+                <!-- Logo -->
+                <a class="navbar-brand mb-3 mb-md-0" href="index.html" style="z-index: 2;">
+                    <img src="~/images/logo-dark.png" class="card-logo card-logo-dark" alt="logo dark" height="40">
+                    <img src="~/images/logo-light.png" class="card-logo card-logo-light" alt="logo light" height="40">
+                </a>
+
+                <!-- Texto promocional -->
+                <div class="text-center text-md-start mx-md-3" style="z-index: 2;">
+                    <h5 class="mb-1 fw-bold text-white">🔥 ¡Oferta de la Semana! 🔥</h5>
+                    <p class="mb-2 text-white">Compra 2 productos y obtén un 20% de descuento en tu pedido.</p>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-dark">Inicio</a>
+                </div>
+
+                <!-- Botón destacado -->
+                <div class="ms-md-auto" style="z-index: 2;">
+                    <a href="@Url.Action("Registro", "Acceso")" class="btn btn-success btn-lg">
+                        ¡Regístrate y Obtén Beneficios!
+                    </a>
+                </div>
+            </div>
+        </section>
+
+
+
+
+        <div class="bg-overlay bg-overlay-pattern"></div>
+
+        <!-- 🔥 Contenido dinámico -->
+        <main role="main">
+            @RenderBody()
+        </main>
+
+        <!-- Footer -->
+        <footer class="custom-footer bg-dark py-5 position-relative">
+            <div class="container">
+
+
+                <div class="row text-center text-sm-start align-items-center mt-5">
+                    <div class="col-sm-6">
+
+                        <div>
+                            <p class="copy-rights mb-0">
+                                <script> document.write(new Date().getFullYear()) </script> © Velzon - Themesbrand
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-sm-end mt-3 mt-sm-0">
+                            <ul class="list-inline mb-0 footer-social-link">
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-facebook-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-github-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-linkedin-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-google-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-dribbble-line"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- end footer -->
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script src="~/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/libs/simplebar/simplebar.min.js"></script>
+    <script src="~/libs/node-waves/waves.min.js"></script>
+    <script src="~/libs/feather-icons/feather.min.js"></script>
+    <script src="~/js/pages/plugins/lord-icon-2.1.0.js"></script>
+    <script src="~/js/plugins.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <!--datatable js-->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <!-- Sweet Alerts js -->
+    <script src="~/libs/sweetalert2/sweetalert2.min.js"></script>
+
+    <!-- Sweet alert init js-->
+    <script src="~/js/pages/sweetalerts.init.js"></script>
+
+    <!-- prismjs plugin -->
+    <script src="~/libs/prismjs/prism.js"></script>
+    <!-- Lord Icon -->
+    <script src="https://cdn.lordicon.com/libs/mssddfmo/lord-icon-2.1.0.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Modal Js -->
+    <script src="~/js/pages/modal.init.js"></script>
+    <!-- apexcharts -->
+    <script src="~/libs/apexcharts/apexcharts.min.js"></script>
+
+    <!-- Vector map-->
+    <script src="~/libs/jsvectormap/js/jsvectormap.min.js"></script>
+    <script src="~/libs/jsvectormap/maps/world-merc.js"></script>
+    <!--Swiper slider js-->
+    <script src="~/libs/swiper/swiper-bundle.min.js"></script>
+
+    <script src="~/js/pages/nft-landing.init.js"></script>
+
+    <!-- Aquí se inyectan los scripts específicos de cada vista -->
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
