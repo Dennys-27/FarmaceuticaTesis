@@ -16,5 +16,7 @@ namespace Farmaceutica.Core.Interfaces
         Task<int> DeleteAsync(int id);
 
         Task<IEnumerable<ComboClienteDto>> GetComboAsync();
+
+       
     }
 }

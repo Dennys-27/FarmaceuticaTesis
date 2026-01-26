@@ -39,6 +39,8 @@ builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
 
 // Servicios y procesos masivos
 builder.Services.AddScoped<IProductoTempRepository, ProductoTempRepository>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 
 // Inyección de dependencias de servicios
 builder.Services.AddScoped<ProcesarExcelService>();

@@ -37,6 +37,7 @@ namespace Farmaceutica.Core.DTO
         [MinLength(6)]
         public string Password { get; set; } = string.Empty;
 
+
         public RolUsuario Rol { get; set; } = RolUsuario.Cliente; // Valor por defecto
     }
 }

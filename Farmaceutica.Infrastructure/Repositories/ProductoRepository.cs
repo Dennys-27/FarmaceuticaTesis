@@ -257,5 +257,73 @@ namespace Farmaceutica.Infrastructure.Repositories
                 }
             };
         }
+
+        public async Task<int> CountActiveAsync()
+        {
+            return await _context.Productos
+                .Where(p => p.IsActive)
+                .CountAsync();
+        }
+
+        public async Task<decimal> SumStockActiveAsync()
+        {
+            return await _context.Productos
+                .Where(p => p.IsActive)
+                .SumAsync(p => p.StockTotal);
+        }
+
+        public async Task<int> CountCreatedInPeriodAsync(DateTime inicio, DateTime fin)
+        {
+            return await _context.Productos
+                .Where(p => p.IsActive && p.FechaCreacion >= inicio && p.FechaCreacion < fin)
+                .CountAsync();
+        }
+
+        public async Task<int> CountActivePreviousMonthAsync()
+        {
+            var inicioMesActual = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            var inicioMesPasado = inicioMesActual.AddMonths(-1);
+
+            return await _context.Productos
+                .Where(p => p.IsActive && p.FechaCreacion >= inicioMesPasado && p.FechaCreacion < inicioMesActual)
+                .CountAsync();
+        }
+
+        public async Task<decimal> GetTotalVentasAsync(DateTime inicio, DateTime fin)
+        {
+            return await _context.Ventas
+                .Where(v =>
+                    v.FechaCreacion >= inicio &&
+                    v.FechaCreacion < fin &&
+                    v.IsActive == 1)
+                .SumAsync(v => v.Total) ?? 0m;
+        }
+
+        public async Task<decimal> GetTotalComprasAsync(DateTime inicio, DateTime fin)
+        {
+            return await _context.Compras
+                .Where(c =>
+                    c.FechaCreacion >= inicio &&
+                    c.FechaCreacion < fin &&
+                    c.IsActive == 1)
+                .SumAsync(c => c.Total) ?? 0m;
+        }
+
+
+        public async Task<int> CountPedidosPendientesAsync()
+        {
+            return await _context.Ventas
+                .Where(p => p.EstadoDelivery == EstadoDelivery.Pendiente)
+                .CountAsync();
+        }
+
+
+        public async Task<decimal> GetTotalPedidosPendientesAsync()
+        {
+            return await _context.Ventas
+                .Where(p => p.EstadoDelivery == EstadoDelivery.Pendiente)
+                .SumAsync(p => p.Total) ?? 0m;
+        }
+
     }
 }

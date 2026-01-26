@@ -1,4 +1,6 @@
-﻿@{
+﻿@using Farmaceutica.Core.Enums   // si tu enum está en esa carpeta
+@using Farmaceutica.Core.Entities
+@{
     ViewData["Title"] = "Compra Mantenedor";
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
@@ -67,6 +69,9 @@
         <div class="card">
             <div class="card-header align-items-center d-flex">
                 <h4 class="card-title mb-0 flex-grow-1">Datos del Proveedor</h4>
+                <button type="button" class="btn btn-primary btn-sm" id="btnNuevoCliente">
+                    <i class="ri-user-add-line me-1"></i>Nuevo
+                </button>
             </div><!-- end card header -->
             <div class="card-body">
                 <p class="text-muted">Datos personales del proveedor: </p>
@@ -226,6 +231,119 @@
             </div>
         </div>
     </div> <!-- end col -->
+</div>
+@* modal de usuario *@
+<div id="modalmantenimiento" class="modal fade" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lbltitulo"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"> </button>
+            </div>
+
+            <form method="post" id="mantenimiento_form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="usu_id" />
+                    <input type="hidden" name="Password" value="Farmacia123*">
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Nombre Usuario</label>
+                                <input type="text" class="form-control" id="usu_usu" name="UsuarioNombre" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="usu_correo" name="Email" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="usu_nom" name="Nombre" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="usu_ape" name="Apellido" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <label class="form-label">Rol</label>
+                            <select class="form-control form-select" name="Rol" id="rol_id">
+                                <option value="">Seleccionar</option>
+                                @foreach (var rol in Enum.GetValues(typeof(RolUsuario)))
+                                {
+                                    <option value="@((int)rol)">@rol</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Ruc</label>
+                                <input type="text" class="form-control" id="usu_ruc" name="Ruc" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Telefono</label>
+                                <input type="text" class="form-control" id="usu_telefono" name="Telefono" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label class="form-label">Direccion</label>
+                                <input type="text" class="form-control" id="usu_direccion" name="Direccion" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div>
+                                <label for="valueInput" class="form-label">Imagen</label>
+                                <input type="file" class="form-control" id="usu_img" name="imagen" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <br>
+
+                    <div class="row gy-2">
+                        <div class="col-md-12">
+                            <div class="text-center">
+                                <a id="btnremovephoto" class="btn btn-danger btn-icon waves-effect waves-light btn-sm"><i class="ri-delete-bin-5-line"></i></a>
+                                <div class="profile-user position-relative d-inline-block mx-auto  mb-4">
+                                    <span id="pre_imagen"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="reset" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 

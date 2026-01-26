@@ -16,7 +16,7 @@ namespace Farmaceutica.Api.Controllers.Farmacia
             _productoRepository = productoRepository;
         }
 
-        // ✅ GET: api/productos
+        // ProductoController.cs - SOLO CAMBIA EL WRAPPER
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -24,7 +24,6 @@ namespace Farmaceutica.Api.Controllers.Farmacia
             {
                 var productos = await _productoRepository.GetAllAsync();
 
-                // Mapear manualmente si no usas AutoMapper
                 var productosDto = productos.Select(p => new ProductoDto
                 {
                     Id = p.Id,
@@ -42,18 +41,25 @@ namespace Farmaceutica.Api.Controllers.Farmacia
                     SubCategoriaNombre = p.SubCategoria?.Nombre ?? "Sin subcategoría"
                 });
 
-                return Ok(new
+                // ⭐⭐ CREA UN OBJETO CON LAS PROPIEDADES QUE ANDROID ESPERA ⭐⭐
+                var response = new
                 {
                     success = true,
                     count = productosDto.Count(),
-                    data = productosDto
-                });
+                    data = productosDto,
+                    message = (string)null,      // Para consistencia
+                    error = (string)null         // Para consistencia
+                };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
                     success = false,
+                    count = 0,
+                    data = new List<ProductoDto>(),  // ← Array vacío
                     message = "Error al obtener productos",
                     error = ex.Message
                 });

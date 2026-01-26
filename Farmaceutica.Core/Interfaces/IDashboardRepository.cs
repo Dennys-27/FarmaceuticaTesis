@@ -10,5 +10,11 @@ namespace Farmaceutica.Core.Interfaces
     public interface IDashboardRepository
     {
         DashboardResumenDto ObtenerResumen();
+
+        Task<List<DashboardProductoDTO>> ObtenerProductosMasVendidos();
+
+        Task<List<DashboardVentaDTO>> ObtenerVentasRecientes();
+
+        Task<List<DashboardPedidoDTO>> ObtenerPedidosPendientes();
     }
 }

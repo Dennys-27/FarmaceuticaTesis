@@ -161,7 +161,42 @@ $(document).ready(function () {
 
 });
 
+// ============================================================
+// FUNCIONES PARA EL MODAL DE CLIENTES (CORREGIDAS)
+// ============================================================
 
+$(document).on("click", "#btnNuevoCliente", function (e) {
+    e.preventDefault(); // Evita comportamiento por defecto
+    e.stopPropagation(); // Evita propagación del evento
+
+    console.log("🟢 Botón NUEVO CLIENTE clickeado");
+
+    // Cambiar título del modal (si es para cliente, no para usuario)
+    // Si el modal es para clientes, deberías cambiar esto:
+    if ($("#lbltitulo").length) {
+        $("#lbltitulo").text("Nuevo Cliente");
+    }
+
+    // Si el modal es para usuarios pero el botón dice "Nuevo Cliente",
+    // probablemente necesites un modal diferente para clientes.
+    // Por ahora, dejamos el modal de usuarios como está.
+
+    // IMPORTANTE: Si el modal es para USUARIOS, pero el botón dice "NUEVO CLIENTE"
+    // hay una inconsistencia. ¿Dónde está el modal para clientes?
+
+    // Mostrar el modal
+    if ($("#modalmantenimiento").length) {
+        $("#modalmantenimiento").modal("show");
+        console.log("✅ Modal de mantenimiento mostrado");
+    } else {
+        console.error("❌ Modal #modalmantenimiento no encontrado");
+        swal.fire({
+            title: "Error",
+            text: "No se encontró el formulario para agregar cliente/usuario",
+            icon: "error"
+        });
+    }
+});
 
 $(document).on("click", "#btnagregar", function () {
     var compr_id = $("#compr_id").val();
@@ -401,3 +436,174 @@ $(document).on("click", "#btnguardar", function () {
 $(document).on("click", "#btnlimpiar", function () {
     location.reload();
 });
+
+
+// ============================================================
+// FUNCIONES PARA EL MODAL DE USUARIOS (MANTENIMIENTO)
+// ============================================================
+
+// Inicializar el formulario de mantenimiento (usuarios)
+function init() {
+    $("#mantenimiento_form").on("submit", function (e) {
+        guardaryeditar(e);
+    });
+}
+
+function guardaryeditar(e) {
+    e.preventDefault();
+
+    var formData = new FormData($("#mantenimiento_form")[0]);
+
+    // Mostrar indicador de carga
+    Swal.fire({
+        title: 'Guardando...',
+        text: 'Por favor espere',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    $.ajax({
+        url: "/Usuarios/Guardar",
+        type: "POST",
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function (response) {
+            Swal.close();
+
+            if (response.success) {
+                // Cerrar modal
+                $("#modalmantenimiento").modal("hide");
+
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    title: "¡Éxito!",
+                    text: response.message || "Cliente guardado correctamente",
+                    icon: "success",
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Recargar la lista de clientes
+                    recargarClientesConSeleccion(response.id);
+                });
+
+            } else {
+                Swal.fire({
+                    title: "Error",
+                    text: response.message || "No se pudo guardar el cliente",
+                    icon: "error",
+                });
+            }
+        },
+        error: function (xhr, status, error) {
+            Swal.close();
+            Swal.fire({
+                title: "Error del sistema",
+                text: "Ocurrió un error al intentar guardar. Por favor intente nuevamente.",
+                icon: "error",
+            });
+            console.error("Error AJAX:", error, xhr.responseText);
+        }
+    });
+}
+
+// Función mejorada para recargar clientes y seleccionar el nuevo
+function recargarClientesConSeleccion(nuevoClienteId) {
+    console.log("🔄 Recargando clientes, nuevo ID:", nuevoClienteId);
+
+    $.ajax({
+        url: "/Proveedor/ComboProveedores",
+        type: "GET",
+        dataType: "json",
+        beforeSend: function () {
+            // Opcional: Mostrar indicador en el select
+            $('#prov_id').prop('disabled', true).next('.select2-container').addClass('select2-container-disabled');
+        },
+        success: function (data) {
+            console.log("✅ Clientes recargados:", data.length, "registros");
+
+            // Limpiar select
+            $('#prov_id').empty().append('<option value="0">Seleccione Proveedor</option>');
+
+            // Agregar opciones
+            $.each(data, function (index, cliente) {
+                $('#prov_id').append(
+                    $('<option>', {
+                        value: cliente.id,
+                        text: cliente.nombre
+                    })
+                );
+            });
+
+            // Seleccionar el nuevo cliente si existe
+            if (nuevoClienteId) {
+                // Esperar un momento para que Select2 se actualice
+                setTimeout(function () {
+                    $('#cli_id').val(nuevoClienteId).trigger('change.select2');
+                    console.log("✅ Nuevo cliente seleccionado:", nuevoClienteId);
+                }, 300);
+            }
+
+            // Cargar datos del cliente si se seleccionó
+            if (nuevoClienteId && nuevoClienteId != '0') {
+                setTimeout(function () {
+                    $('#cli_id').trigger('change');
+                }, 500);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("❌ Error al recargar clientes:", error);
+            Swal.fire({
+                title: "Atención",
+                text: "El cliente se guardó, pero no se pudo actualizar la lista. Por favor refresque la página.",
+                icon: "warning",
+                timer: 3000
+            });
+        },
+        complete: function () {
+            // Reactivar el select
+            $('#cli_id').prop('disabled', false).next('.select2-container').removeClass('select2-container-disabled');
+        }
+    });
+}
+
+// Función para previsualizar imagen en el modal de usuarios
+function filePreview(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $("#pre_imagen").html(
+                "<img src=" +
+                e.target.result +
+                ' class="rounded-circle avatar-xl img-thumbnail user-profile-image" alt="user-profile-image"></img>'
+            );
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+$(document).on("change", "#usu_img", function () {
+    filePreview(this);
+});
+
+$(document).on("click", "#btnremovephoto", function () {
+    $("#usu_img").val("");
+    $("#pre_imagen").html(
+        '<img src="../images/users/usuario.png" class="rounded-circle avatar-xl img-thumbnail user-profile-image" alt="user-profile-image"></img><input type="hidden" name="hidden_usuario_imagen" value="" />'
+    );
+});
+
+// Inicializar
+init();
+
+// ============================================================
+// OBSERVACIÓN IMPORTANTE:
+// ============================================================
+// Hay una confusión en tu código:
+// 1. El botón #btnNuevoCliente parece estar en el formulario de VENTAS
+// 2. Pero abre el modal #modalmantenimiento que es para USUARIOS
+// 3. Si quieres agregar un NUEVO CLIENTE desde el formulario de ventas,
+//    probablemente necesites un modal diferente con campos de cliente
+//    (ruc, dirección, teléfono, email) en lugar de campos de usuario

@@ -24,7 +24,14 @@ namespace Farmaceutica.Core.Interfaces
 
         Task<IEnumerable<ProductoPrincipalDto>> ProductosPrincipal();
 
-
+        Task<int> CountActiveAsync();
+        Task<decimal> SumStockActiveAsync();
+        Task<int> CountCreatedInPeriodAsync(DateTime inicio, DateTime fin);
+        Task<int> CountActivePreviousMonthAsync();
+        Task<decimal> GetTotalVentasAsync(DateTime inicio, DateTime fin);
+        Task<decimal> GetTotalComprasAsync(DateTime inicio, DateTime fin);
+        Task<int> CountPedidosPendientesAsync();
+        Task<decimal> GetTotalPedidosPendientesAsync();
 
 
     }

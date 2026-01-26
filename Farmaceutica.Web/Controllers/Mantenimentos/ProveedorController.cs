@@ -89,6 +89,8 @@ namespace Farmaceutica.Web.Controllers.Mantenimentos
                     cliente.Apellido,
                     cliente.UsuarioNombre,
                     cliente.Telefono,
+                    cliente.Ruc,
+                    cliente.Direccion,
                     Password = cliente.Password,
                     Rol = (int)cliente.Rol,
                     Imagen = string.IsNullOrEmpty(cliente.Imagen) ? "usuario.png" : cliente.Imagen

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Farmaceutica.Api.Controllers.Acceso
 {
-    [Route("api/[controller]")]
+    [Route("api/")]
     [ApiController]
     public class LoginController : ControllerBase
     {
@@ -27,24 +27,40 @@ namespace Farmaceutica.Api.Controllers.Acceso
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] Core.DTO.LoginDto dto)
         {
-            var token = await _authService.LoginAsync(dto.UsuarioNombre, dto.Password);
-
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized(new { mensaje = "Usuario o contraseña incorrectos" });
-
-            // Obtener información del usuario para la respuesta
-            var usuario = await _usuarioRepository.GetByUsuarioNombreAsync(dto.UsuarioNombre);
-
-            var response = new LoginResponseDto
+            try
             {
-                Token = token,
-                Expira = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:ExpireMinutes"])),
-                UsuarioNombre = usuario.UsuarioNombre,
-                Email = usuario.Email,
-                Rol = usuario.Rol
-            };
+                var token = await _authService.LoginAsync(dto.UsuarioNombre, dto.Password);
 
-            return Ok(response);
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized(new
+                    {
+                        success = false,  // ← Agregar
+                        mensaje = "Usuario o contraseña incorrectos"
+                    });
+
+                var usuario = await _usuarioRepository.GetByUsuarioNombreAsync(dto.UsuarioNombre);
+
+                var response = new
+                {
+                    success = true,  // ← Agregar este campo
+                    mensaje = "Login exitoso",  // ← Agregar mensaje
+                    token = token,
+                    expira = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:ExpireMinutes"])),
+                    usuarioNombre = usuario.UsuarioNombre,
+                    email = usuario.Email,
+                    rol = usuario.Rol
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    mensaje = ex.Message
+                });
+            }
         }
 
 
