@@ -1,5 +1,5 @@
-using Farmaceutica.Application.IServices;
-using Farmaceutica.Application.Services; // ? Aseg˙rate que sea este namespace
+Ôªøusing Farmaceutica.Application.IServices;
+using Farmaceutica.Application.Services; // ? Aseg√∫rate que sea este namespace
 using Farmaceutica.Core.Entities;
 using Farmaceutica.Core.Interfaces;
 using Farmaceutica.Infrastructure.Data;
@@ -21,7 +21,7 @@ builder.Services.AddDbContext<AppFarmaceuticaContex>(options =>
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// InyecciÛn de dependencias de repositorios
+// Inyecci√≥n de dependencias de repositorios
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IEncargadoRepository, EncargadoRepository>();
@@ -42,18 +42,18 @@ builder.Services.AddScoped<IProductoTempRepository, ProductoTempRepository>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 
-// InyecciÛn de dependencias de servicios
+// Inyecci√≥n de dependencias de servicios
 builder.Services.AddScoped<ProcesarExcelService>();
 
-// ? CORRECCI”N SIMPLIFICADA: Solo registrar una vez
+// ? CORRECCI√ìN SIMPLIFICADA: Solo registrar una vez
 builder.Services.AddHttpContextAccessor();
 
-// Dependiendo de cÛmo tengas estructurado tu proyecto, usa UNA de estas opciones:
+// Dependiendo de c√≥mo tengas estructurado tu proyecto, usa UNA de estas opciones:
 
-// OPCI”N 1: Si IEmailService est· en Farmaceutica.Application.Services
+// OPCI√ìN 1: Si IEmailService est√° en Farmaceutica.Application.Services
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// OPCI”N 2: Si NO tienes interfaz IEmailService, usa esto:
+// OPCI√ìN 2: Si NO tienes interfaz IEmailService, usa esto:
 // builder.Services.AddScoped<EmailService>();
 // builder.Services.AddScoped<AuthService>(provider => 
 //     new AuthService(
@@ -78,7 +78,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// Configurar autenticaciÛn por cookies
+// Configurar autenticaci√≥n por cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -87,7 +87,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
     });
 
-// Configurar polÌticas de autorizaciÛn
+// Configurar pol√≠ticas de autorizaci√≥n
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdministradorOnly", policy => policy.RequireRole("Administrador"));
@@ -96,43 +96,72 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ClienteOnly", policy => policy.RequireRole("Cliente"));
 });
 
-// --- NUEVO: Configurar sesiÛn ---
+// --- NUEVO: Configurar sesi√≥n ---
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(1); // DuraciÛn de la sesiÛn
+    options.IdleTimeout = TimeSpan.FromHours(1); // Duraci√≥n de la sesi√≥n
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
 var app = builder.Build();
 
-// Ahora que tenemos 'app', podemos verificar la configuraciÛn SMTP
+// Despu√©s de 'var app = builder.Build();'
 try
 {
     using (var scope = app.Services.CreateScope())
     {
-        // NOTA: Si est·s usando la configuraciÛn antigua EmailSettings,
-        // cambia esto por la nueva configuraciÛn Smtp
-        var smtpHost = builder.Configuration["Smtp:Host"];
-        var smtpPort = builder.Configuration["Smtp:Port"];
-        var smtpUser = builder.Configuration["Smtp:User"];
-
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-        logger.LogInformation("=== CONFIGURACI”N SMTP ===");
-        logger.LogInformation($"Servidor: {smtpHost}");
-        logger.LogInformation($"Puerto: {smtpPort}");
-        logger.LogInformation($"Usuario: {smtpUser}");
-        logger.LogInformation($"ContraseÒa configurada: {(string.IsNullOrEmpty(builder.Configuration["Smtp:Pass"]) ? "NO" : "SÕ")}");
-        logger.LogInformation("==========================");
+        logger.LogInformation("=== VERIFICACI√ìN DE CONFIGURACI√ìN SMTP ===");
+
+        // Verificar AMBAS configuraciones (antigua y nueva)
+        logger.LogInformation("--- Configuraci√≥n ANTIGUA (EmailSettings) ---");
+        var oldSmtpServer = configuration["EmailSettings:SmtpServer"];
+        var oldPort = configuration["EmailSettings:Port"];
+        var oldUser = configuration["EmailSettings:Username"];
+        var oldPass = configuration["EmailSettings:Password"];
+
+        logger.LogInformation($"Servidor: {oldSmtpServer ?? "NO CONFIGURADO"}");
+        logger.LogInformation($"Puerto: {oldPort ?? "NO CONFIGURADO"}");
+        logger.LogInformation($"Usuario: {oldUser ?? "NO CONFIGURADO"}");
+        logger.LogInformation($"Contrase√±a: {(string.IsNullOrEmpty(oldPass) ? "NO" : "S√ç")}");
+
+        logger.LogInformation("--- Configuraci√≥n NUEVA (Smtp) ---");
+        var newSmtpHost = configuration["Smtp:Host"];
+        var newSmtpPort = configuration["Smtp:Port"];
+        var newSmtpUser = configuration["Smtp:User"];
+        var newSmtpPass = configuration["Smtp:Pass"];
+
+        logger.LogInformation($"Host: {newSmtpHost ?? "NO CONFIGURADO"}");
+        logger.LogInformation($"Puerto: {newSmtpPort ?? "NO CONFIGURADO"}");
+        logger.LogInformation($"Usuario: {newSmtpUser ?? "NO CONFIGURADO"}");
+        logger.LogInformation($"Contrase√±a: {(string.IsNullOrEmpty(newSmtpPass) ? "NO" : "S√ç")}");
+
+        // Detectar cu√°l est√° activa
+        var emailService = scope.ServiceProvider.GetService<IEmailService>();
+        if (emailService != null)
+        {
+            logger.LogInformation("--- Servicio de correo detectado ---");
+            logger.LogInformation($"Tipo: {emailService.GetType().Name}");
+        }
+
+        logger.LogInformation("===========================================");
+
+        // Advertencia si hay configuraciones duplicadas
+        if (!string.IsNullOrEmpty(oldSmtpServer) && !string.IsNullOrEmpty(newSmtpHost))
+        {
+            logger.LogWarning("‚ö†Ô∏è  Tienes DOS configuraciones SMTP. Esto puede causar confusi√≥n.");
+            logger.LogWarning("   Recomendaci√≥n: Usa solo UNA (Smtp o EmailSettings)");
+        }
     }
 }
 catch (Exception ex)
 {
-    // Solo loguear el error pero no detener la aplicaciÛn
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "Error al verificar configuraciÛn SMTP");
+    logger.LogError(ex, "Error al verificar configuraci√≥n SMTP");
 }
 
 // Configure the HTTP request pipeline.
@@ -147,10 +176,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// --- NUEVO: Habilitar sesiÛn ---
+// --- NUEVO: Habilitar sesi√≥n ---
 app.UseSession();
 
-app.UseAuthentication(); // Aseg˙rate de que Authentication estÈ antes de Authorization
+app.UseAuthentication(); // Aseg√∫rate de que Authentication est√© antes de Authorization
 app.UseAuthorization();
 
 // Rutas por defecto

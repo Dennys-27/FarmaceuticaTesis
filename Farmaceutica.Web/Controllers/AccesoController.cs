@@ -135,7 +135,7 @@ namespace Farmaceutica.Web.Controllers
             {
                 await _authService.RestaurarContraseniaAsync(token, NuevaContrasenia, ConfirmarContrasenia);
                 TempData["Success"] = "Contraseña restablecida correctamente.";
-                return RedirectToAction("Login", "Acceso");
+                return RedirectToAction("Index", "Acceso");
             }
             catch (Exception ex)
             {

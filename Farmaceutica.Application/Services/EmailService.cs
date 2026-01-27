@@ -5,11 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Farmaceutica.Application.Services
@@ -19,127 +16,157 @@ namespace Farmaceutica.Application.Services
         private readonly EmailSettings _emailSettings;
         private readonly ILogger<EmailService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _config;
 
         public EmailService(
             IOptions<EmailSettings> emailSettings,
             ILogger<EmailService> logger,
-            IHttpContextAccessor httpContextAccessor,
-            IConfiguration config)
+            IHttpContextAccessor httpContextAccessor)
         {
             _emailSettings = emailSettings.Value;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
-            _config = config;
+
+            // Verificar configuración al iniciar
+            ValidateAndLogConfiguration();
+        }
+
+        private void ValidateAndLogConfiguration()
+        {
+            _logger.LogInformation("=== CONFIGURACIÓN SMTP CARGADA ===");
+            _logger.LogInformation("Servidor: {Server}:{Port}", _emailSettings.SmtpServer, _emailSettings.Port);
+            _logger.LogInformation("Usuario: {User}", _emailSettings.UserName);
+            _logger.LogInformation("Remitente: {Name} <{Email}>", _emailSettings.SenderName, _emailSettings.SenderEmail);
+            _logger.LogInformation("SSL: {Ssl}", _emailSettings.EnableSsl);
+            _logger.LogInformation("Contraseña: {HasPassword}",
+                string.IsNullOrEmpty(_emailSettings.Password) ? "NO" : "SÍ (App Password)");
+            _logger.LogInformation("===============================");
+
+            // Validar que todo esté configurado
+            if (string.IsNullOrEmpty(_emailSettings.SmtpServer))
+                throw new ArgumentException("SmtpServer no configurado en appsettings.json");
+
+            if (string.IsNullOrEmpty(_emailSettings.UserName))
+                throw new ArgumentException("UserName no configurado en appsettings.json");
+
+            if (string.IsNullOrEmpty(_emailSettings.Password))
+                throw new ArgumentException("Password no configurado en appsettings.json");
         }
 
         public async Task SendPasswordResetEmail(string email, string resetToken)
         {
-            Exception lastException = null;
+            _logger.LogInformation("🔐 Enviando recuperación a: {Email}", email);
 
-            // Lista de configuraciones a probar (comunes en Plesk)
-            var configsToTry = new[]
+            try
             {
-        new { Host = "mail.fersoftweb.com", Port = 587, EnableSsl = true, Description = "mail. + 587 SSL" },
-        new { Host = "mail.fersoftweb.com", Port = 465, EnableSsl = true, Description = "mail. + 465 SSL" },
-        new { Host = "fersoftweb.com", Port = 587, EnableSsl = true, Description = "sin mail. + 587 SSL" },
-        new { Host = "fersoftweb.com", Port = 465, EnableSsl = true, Description = "sin mail. + 465 SSL" },
-        new { Host = "179.61.12.165", Port = 25, EnableSsl = false, Description = "IP + 25 sin SSL" }, // Tu IP del servidor
-        new { Host = "localhost", Port = 25, EnableSsl = false, Description = "localhost + 25" }
-    };
+                // Construir URL de restablecimiento
+                var request = _httpContextAccessor.HttpContext?.Request;
+                var host = request?.Host.ToString() ?? "localhost:7101";
+                var scheme = request?.Scheme ?? "https";
+                var resetUrl = $"{scheme}://{host}/Acceso/RestaurarConstrasenia?token={resetToken}";
 
-            foreach (var config in configsToTry)
-            {
-                try
+                // Crear mensaje
+                var mailMessage = new MailMessage
                 {
-                    _logger.LogInformation($"🔧 Probando: {config.Description} ({config.Host}:{config.Port})");
+                    From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName),
+                    Subject = "🔐 Restablecimiento de Contraseña - Farmacia La Puna",
+                    Body = $@"
+                    <div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;'>
+                        <div style='background: linear-gradient(135deg, #2196F3, #1976D2); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;'>
+                            <h2 style='margin: 0;'>🔐 Restablecer Contraseña</h2>
+                        </div>
+                        <div style='background-color: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
+                            <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.</p>
+                            <p>Haz clic en el siguiente botón:</p>
+                            <div style='text-align: center; margin: 25px 0;'>
+                                <a href='{resetUrl}' style='
+                                    background-color: #2196F3;
+                                    color: white;
+                                    padding: 12px 30px;
+                                    text-decoration: none;
+                                    border-radius: 5px;
+                                    font-weight: bold;
+                                    display: inline-block;
+                                '>🔄 Restablecer Contraseña</a>
+                            </div>
+                            <p>O copia y pega esta URL en tu navegador:</p>
+                            <div style='background-color: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; font-size: 12px;'>
+                                {resetUrl}
+                            </div>
+                            <p style='margin-top: 20px;'><strong>Token de verificación:</strong> {resetToken}</p>
+                            <hr style='border: none; border-top: 1px solid #ddd; margin: 25px 0;'>
+                            <p style='font-size: 12px; color: #666;'>
+                                ⏰ <strong>Este enlace es válido por 1 hora.</strong><br>
+                                🛡️ Si no solicitaste este restablecimiento, puedes ignorar este correo.
+                            </p>
+                        </div>
+                    </div>",
+                    IsBodyHtml = true
+                };
+                mailMessage.To.Add(email);
 
-                    await SendEmailWithConfig(email, resetToken, config.Host, config.Port, config.EnableSsl);
+                // Configurar cliente SMTP para Gmail
+                using var smtpClient = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.Port)
+                {
+                    EnableSsl = _emailSettings.EnableSsl,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_emailSettings.UserName, _emailSettings.Password),
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    Timeout = 30000 // 30 segundos
+                };
 
-                    _logger.LogInformation($"✅ ¡ÉXITO con {config.Description}!");
-                    return;
+                // Configurar TLS 1.2 (requerido por Gmail)
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                _logger.LogInformation("🚀 Enviando correo via Gmail SMTP...");
+                await smtpClient.SendMailAsync(mailMessage);
+                _logger.LogInformation("✅ Correo enviado exitosamente a {Email}", email);
+            }
+            catch (SmtpException smtpEx)
+            {
+                _logger.LogError(smtpEx, "❌ Error SMTP al enviar a {Email}", email);
+
+                // Mensajes específicos para errores comunes de Gmail
+                string errorMessage = smtpEx.Message.ToLower();
+                if (errorMessage.Contains("authentication failed") || errorMessage.Contains("5.7.8"))
+                {
+                    throw new Exception("❌ Error de autenticación Gmail. Verifica:\n" +
+                        "1. Que la contraseña sea una 'App Password' (no tu contraseña normal)\n" +
+                        "2. Que hayas activado la verificación en dos pasos\n" +
+                        "3. Que la App Password sea correcta");
                 }
-                catch (Exception ex)
+                else if (errorMessage.Contains("timed out"))
                 {
-                    lastException = ex;
-                    _logger.LogWarning($"❌ Falló {config.Description}: {ex.Message}");
+                    throw new Exception("❌ Timeout al conectar con Gmail. Verifica tu conexión a internet.");
+                }
+                else
+                {
+                    throw new Exception($"❌ Error SMTP: {smtpEx.Message}");
                 }
             }
-
-            // Si todas fallan
-            _logger.LogError(lastException, "❌ Todas las configuraciones SMTP fallaron");
-
-            // Fallback: mostrar token en consola
-            var request = _httpContextAccessor.HttpContext?.Request;
-            var host = request?.Host.ToString() ?? "localhost:7101";
-            var scheme = request?.Scheme ?? "https";
-            var resetUrl = $"{scheme}://{host}/Acceso/RestaurarConstrasenia?token={resetToken}";
-
-            _logger.LogInformation($"📧 TOKEN FALLBACK para {email}: {resetToken}");
-            _logger.LogInformation($"🔗 URL: {resetUrl}");
-
-            throw new Exception($"No se pudo enviar el correo. Usa este enlace: {resetUrl}");
-        }
-
-        private async Task SendEmailWithConfig(string email, string resetToken, string host, int port, bool enableSsl)
-        {
-            var smtpUser = _config["Smtp:User"];
-            var smtpPass = _config["Smtp:Pass"];
-
-            // Construir URL
-            var request = _httpContextAccessor.HttpContext?.Request;
-            var appHost = request?.Host.ToString() ?? "localhost:7101";
-            var scheme = request?.Scheme ?? "https";
-            var resetUrl = $"{scheme}://{appHost}/Acceso/RestaurarConstrasenia?token={resetToken}";
-
-            // Crear mensaje
-            var mailMessage = new MailMessage
+            catch (Exception ex)
             {
-                From = new MailAddress(smtpUser, "Farmacia La Puna"),
-                Subject = "Restablecimiento de Contraseña",
-                Body = $@"
-            <h3>Restablecer Contraseña</h3>
-            <p>Haz clic aquí: <a href='{resetUrl}'>{resetUrl}</a></p>
-            <p><strong>Token:</strong> {resetToken}</p>
-            <p>Válido por 1 hora.</p>",
-                IsBodyHtml = true
-            };
-            mailMessage.To.Add(email);
+                _logger.LogError(ex, "❌ Error general al enviar correo a {Email}", email);
 
-            // Configurar cliente SMTP
-            using var smtpClient = new SmtpClient(host, port)
-            {
-                EnableSsl = enableSsl,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(smtpUser, smtpPass),
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                Timeout = 10000 // 10 segundos por prueba
-            };
+                // Fallback: generar URL para mostrar
+                var request = _httpContextAccessor.HttpContext?.Request;
+                var host = request?.Host.ToString() ?? "localhost:7101";
+                var scheme = request?.Scheme ?? "https";
+                var resetUrl = $"{scheme}://{host}/Acceso/RestaurarConstrasenia?token={resetToken}";
 
-            // Configurar seguridad
-            if (enableSsl)
-            {
-                System.Net.ServicePointManager.SecurityProtocol =
-                    System.Net.SecurityProtocolType.Tls12;
+                _logger.LogInformation("📧 TOKEN FALLBACK para {Email}: {Token}", email, resetToken);
+                _logger.LogInformation("🔗 URL: {Url}", resetUrl);
+
+                throw new Exception($"No se pudo enviar el correo. Usa este enlace: {resetUrl}");
             }
-
-            await smtpClient.SendMailAsync(mailMessage);
         }
 
         public async Task SendVerificationEmail(string email, string verificationCode)
         {
             try
             {
-                // Modo desarrollo: Mostrar en consola
-                if (_emailSettings.SmtpServer.Contains("gmail"))
-                {
-                    _logger.LogInformation($"🔐 Código de verificación para {email}: {verificationCode}");
-                }
-
                 var request = _httpContextAccessor.HttpContext?.Request;
-                var host = request?.Host.ToString() ?? "localhost:port";
+                var host = request?.Host.ToString() ?? "localhost:7101";
                 var scheme = request?.Scheme ?? "https";
-
                 var verificationUrl = $"{scheme}://{host}/Acceso/VerificarEmail?email={WebUtility.UrlEncode(email)}&token={verificationCode}";
 
                 var subject = "✅ Verifica tu cuenta - Farmacia La Puna";
@@ -149,18 +176,20 @@ namespace Farmaceutica.Application.Services
                     <head>
                         <meta charset='UTF-8'>
                         <style>
-                            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                            .header {{ background-color: #2196F3; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                            .content {{ padding: 30px; background-color: #f9f9f9; }}
-                            .button {{ display: inline-block; padding: 12px 24px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }}
-                            .code {{ font-size: 24px; font-weight: bold; color: #2196F3; text-align: center; margin: 20px 0; }}
+                            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }}
+                            .container {{ max-width: 600px; margin: 0 auto; }}
+                            .header {{ background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                            .content {{ padding: 30px; background-color: #f9f9f9; border-radius: 0 0 10px 10px; }}
+                            .button {{ display: inline-block; padding: 14px 28px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; }}
+                            .code {{ font-size: 32px; font-weight: bold; color: #2196F3; text-align: center; margin: 25px 0; letter-spacing: 5px; background-color: #f0f8ff; padding: 15px; border-radius: 8px; }}
+                            .url-box {{ background-color: #f5f5f5; padding: 12px; border-radius: 5px; word-break: break-all; font-size: 13px; margin: 15px 0; }}
                         </style>
                     </head>
                     <body>
                         <div class='container'>
                             <div class='header'>
-                                <h2>✅ Bienvenido a Farmacia La Puna</h2>
+                                <h2 style='margin: 0;'>✅ Verifica tu Cuenta</h2>
+                                <p style='margin: 10px 0 0 0; opacity: 0.9;'>Farmacia La Puna</p>
                             </div>
                             <div class='content'>
                                 <p>¡Gracias por registrarte! Para activar tu cuenta, verifica tu dirección de correo electrónico.</p>
@@ -171,22 +200,24 @@ namespace Farmaceutica.Application.Services
                                     <a href='{verificationUrl}' class='button'>✨ Verificar Mi Cuenta</a>
                                 </p>
                                 
-                                <p>Si no puedes hacer clic en el botón, copia y pega este enlace:</p>
-                                <p><small>{verificationUrl}</small></p>
+                                <p>Si el botón no funciona, copia y pega este enlace:</p>
+                                <div class='url-box'>{verificationUrl}</div>
                                 
-                                <p>Este código expirará en 24 horas.</p>
+                                <p style='color: #666; font-size: 14px;'>
+                                    ⚠️ <strong>Este código expirará en 24 horas.</strong>
+                                </p>
                             </div>
                         </div>
                     </body>
                     </html>";
 
                 await SendEmailAsync(email, subject, body);
-                _logger.LogInformation($"✅ Email de verificación enviado a: {email}");
+                _logger.LogInformation("✅ Email de verificación enviado a: {Email}", email);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ Error enviando email de verificación a: {email}");
-                _logger.LogInformation($"📧 CÓDIGO FALLBACK para {email}: {verificationCode}");
+                _logger.LogError(ex, "❌ Error enviando email de verificación a: {Email}", email);
+                _logger.LogInformation("📧 CÓDIGO FALLBACK para {Email}: {Code}", email, verificationCode);
                 throw;
             }
         }
@@ -202,32 +233,43 @@ namespace Farmaceutica.Application.Services
                     <head>
                         <meta charset='UTF-8'>
                         <style>
-                            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                            .header {{ background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
-                            .welcome-icon {{ font-size: 48px; margin-bottom: 20px; }}
+                            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }}
+                            .container {{ max-width: 600px; margin: 0 auto; }}
+                            .header {{ background: linear-gradient(135deg, #2196F3, #1976D2); color: white; padding: 40px; text-align: center; border-radius: 10px 10px 0 0; }}
+                            .content {{ padding: 35px; background-color: #f9f9f9; border-radius: 0 0 10px 10px; }}
+                            .welcome-icon {{ font-size: 60px; margin-bottom: 20px; }}
+                            .features {{ margin: 25px 0; }}
+                            .feature-item {{ margin: 10px 0; padding-left: 25px; position: relative; }}
+                            .feature-item:before {{ content: '✓'; position: absolute; left: 0; color: #4CAF50; font-weight: bold; }}
+                            .btn-primary {{ display: inline-block; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; }}
                         </style>
                     </head>
                     <body>
                         <div class='container'>
                             <div class='header'>
                                 <div class='welcome-icon'>👋</div>
-                                <h2>¡Hola {nombreUsuario}!</h2>
-                                <p>Te damos la bienvenida a Farmacia La Puna</p>
+                                <h1 style='margin: 10px 0;'>¡Hola {nombreUsuario}!</h1>
+                                <p style='font-size: 18px; opacity: 0.9;'>Te damos la bienvenida a Farmacia La Puna</p>
                             </div>
-                            <div style='padding: 30px; background-color: #f9f9f9;'>
-                                <p>Estamos emocionados de tenerte con nosotros. Ahora puedes:</p>
-                                <ul>
-                                    <li>📦 Realizar pedidos de medicamentos</li>
-                                    <li>💊 Consultar nuestro catálogo</li>
-                                    <li>🚀 Acceder a promociones exclusivas</li>
-                                    <li>📱 Gestionar tu perfil</li>
-                                </ul>
-                                <p>Si necesitas ayuda, no dudes en contactarnos.</p>
-                                <p style='text-align: center; margin-top: 30px;'>
-                                    <a href='https://tudominio.com' style='background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;'>
-                                        🏪 Ir a la Farmacia
-                                    </a>
+                            <div class='content'>
+                                <p>Estamos emocionados de tenerte con nosotros. Ahora puedes acceder a todos nuestros servicios:</p>
+                                
+                                <div class='features'>
+                                    <div class='feature-item'>📦 Realizar pedidos de medicamentos en línea</div>
+                                    <div class='feature-item'>💊 Consultar nuestro catálogo completo</div>
+                                    <div class='feature-item'>🚀 Acceder a promociones y descuentos exclusivos</div>
+                                    <div class='feature-item'>📱 Gestionar tu perfil y historial de compras</div>
+                                    <div class='feature-item'>🛡️ Comprar con total seguridad y confidencialidad</div>
+                                </div>
+                                
+                                <p>Si necesitas ayuda o tienes alguna pregunta, no dudes en contactarnos.</p>
+                                
+                                <div style='text-align: center; margin-top: 35px;'>
+                                    <a href='https://fersoftweb.com' class='btn-primary'>🏪 Comenzar a Comprar</a>
+                                </div>
+                                
+                                <p style='margin-top: 25px; font-size: 14px; color: #666; text-align: center;'>
+                                    Farmacia La Puna · Tu salud es nuestra prioridad
                                 </p>
                             </div>
                         </div>
@@ -235,19 +277,23 @@ namespace Farmaceutica.Application.Services
                     </html>";
 
                 await SendEmailAsync(email, subject, body);
-                _logger.LogInformation($"✅ Email de bienvenida enviado a: {email}");
+                _logger.LogInformation("✅ Email de bienvenida enviado a: {Email}", email);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ Error enviando email de bienvenida a: {email}");
-                // No lanzamos excepción para no afectar el registro
+                _logger.LogError(ex, "❌ Error enviando email de bienvenida a: {Email}", email);
+                // No lanzar excepción para no afectar el flujo de registro
             }
         }
 
         private async Task SendEmailAsync(string toEmail, string subject, string body)
         {
             // Validar configuración
-            ValidateEmailSettings();
+            if (string.IsNullOrEmpty(_emailSettings.SenderEmail))
+                throw new ArgumentException("SenderEmail no configurado");
+
+            if (string.IsNullOrEmpty(_emailSettings.SenderName))
+                throw new ArgumentException("SenderName no configurado");
 
             var mailMessage = new MailMessage
             {
@@ -256,33 +302,21 @@ namespace Farmaceutica.Application.Services
                 Body = body,
                 IsBodyHtml = true
             };
-
             mailMessage.To.Add(toEmail);
 
             using var smtpClient = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.Port)
             {
                 EnableSsl = _emailSettings.EnableSsl,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password),
+                Credentials = new NetworkCredential(_emailSettings.UserName, _emailSettings.Password),
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 Timeout = 30000 // 30 segundos
             };
 
+            // TLS 1.2 para Gmail
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             await smtpClient.SendMailAsync(mailMessage);
-        }
-
-        private void ValidateEmailSettings()
-        {
-            if (string.IsNullOrEmpty(_emailSettings.SmtpServer))
-                throw new ArgumentNullException(nameof(_emailSettings.SmtpServer), "Servidor SMTP no configurado");
-
-            if (string.IsNullOrEmpty(_emailSettings.Username))
-                throw new ArgumentNullException(nameof(_emailSettings.Username), "Usuario SMTP no configurado");
-
-            if (string.IsNullOrEmpty(_emailSettings.Password))
-                throw new ArgumentNullException(nameof(_emailSettings.Password), "Contraseña SMTP no configurada");
-
-            _logger.LogDebug($"📧 Configuración SMTP: {_emailSettings.SmtpServer}:{_emailSettings.Port}");
         }
     }
 }
