@@ -38,9 +38,7 @@
                                             <div class="carousel-item">
                                                 <p class="fs-15 fst-italic">" Consulta gratuita con nuestro farmacéutico al realizar tu compra. "</p>
                                             </div>
-
                                         </div>
-
                                     </div>
                                 </div>
                                 <!-- end carousel -->
@@ -65,24 +63,62 @@
                             <div class="alert alert-success">@TempData["Success"]</div>
                         }
                         <div class="mt-4">
-                            <form method="post">
+                            <form method="post" id="resetForm">
                                 <input type="hidden" name="token" value="@token" />
+                                
                                 <div class="mb-3">
                                     <label class="form-label">Nueva contraseña</label>
-                                    <input type="password" name="NuevaContrasenia" class="form-control" required>
+                                    <div class="position-relative auth-pass-inputgroup mb-3">
+                                        <input type="password" class="form-control pe-5" 
+                                               id="NuevaContrasenia" 
+                                               name="NuevaContrasenia" 
+                                               placeholder="Ingresa nueva contraseña"
+                                               required>
+                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted" 
+                                                type="button" id="password-addon-new">
+                                            <i class="ri-eye-fill align-middle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="password-validation" class="mt-2">
+                                        <small class="d-block">
+                                            <span id="uppercase-check" class="text-muted">
+                                                <i class="ri-checkbox-blank-circle-line align-middle"></i> Al menos una mayúscula
+                                            </span>
+                                        </small>
+                                        <small class="d-block">
+                                            <span id="number-check" class="text-muted">
+                                                <i class="ri-checkbox-blank-circle-line align-middle"></i> Al menos un número
+                                            </span>
+                                        </small>
+                                        <small class="d-block">
+                                            <span id="special-check" class="text-muted">
+                                                <i class="ri-checkbox-blank-circle-line align-middle"></i> Al menos un signo especial
+                                            </span>
+                                        </small>
+                                    </div>
                                 </div>
+                                
                                 <div class="mb-3">
                                     <label class="form-label">Confirmar contraseña</label>
-                                    <input type="password" name="ConfirmarContrasenia" class="form-control" required>
+                                    <div class="position-relative auth-pass-inputgroup mb-3">
+                                        <input type="password" class="form-control pe-5" 
+                                               id="ConfirmarContrasenia" 
+                                               name="ConfirmarContrasenia" 
+                                               placeholder="Confirma tu contraseña"
+                                               required>
+                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted" 
+                                                type="button" id="password-addon-confirm">
+                                            <i class="ri-eye-fill align-middle"></i>
+                                        </button>
+                                    </div>
+                                    <small id="password-match" class="text-muted d-block mt-2">
+                                        <i class="ri-checkbox-blank-circle-line align-middle"></i> Las contraseñas deben coincidir
+                                    </small>
                                 </div>
-                                <button class="btn btn-success w-100" type="submit">Restablecer</button>
+                                
+                                <button class="btn btn-success w-100" type="submit" id="submitBtn">Restablecer</button>
                             </form>
-                            
-
-
                         </div>
-
-
                     </div>
                 </div>
                 <!-- end col -->
@@ -92,6 +128,140 @@
         <!-- end card -->
     </div>
     <!-- end col -->
-
 </div>
 <!-- end row -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Referencias a elementos
+    const nuevaContraseniaInput = document.getElementById('NuevaContrasenia');
+    const confirmarContraseniaInput = document.getElementById('ConfirmarContrasenia');
+    const passwordAddonNew = document.getElementById('password-addon-new');
+    const passwordAddonConfirm = document.getElementById('password-addon-confirm');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetForm = document.getElementById('resetForm');
+    
+    // Elementos de validación
+    const uppercaseCheck = document.getElementById('uppercase-check');
+    const numberCheck = document.getElementById('number-check');
+    const specialCheck = document.getElementById('special-check');
+    const passwordMatchCheck = document.getElementById('password-match');
+
+    // 2. Funcionalidad para mostrar/ocultar contraseñas
+    function togglePasswordVisibility(inputId, buttonId) {
+        const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
+        const icon = button.querySelector('i');
+        
+        button.addEventListener('click', function () {
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            
+            if (type === 'text') {
+                icon.className = 'ri-eye-off-fill align-middle';
+            } else {
+                icon.className = 'ri-eye-fill align-middle';
+            }
+        });
+    }
+    
+    togglePasswordVisibility('NuevaContrasenia', 'password-addon-new');
+    togglePasswordVisibility('ConfirmarContrasenia', 'password-addon-confirm');
+
+    // 3. Función para validar contraseña
+    function validatePassword(password) {
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        const hasSpecial = /[#$%&*]/.test(password);
+
+        return {
+            hasUppercase: hasUppercase,
+            hasNumber: hasNumber,
+            hasSpecial: hasSpecial,
+            isValid: hasUppercase && hasNumber && hasSpecial
+        };
+    }
+
+    // 4. Función para validar que las contraseñas coincidan
+    function validatePasswordMatch(password, confirmPassword) {
+        return {
+            matches: password === confirmPassword,
+            isValid: password === confirmPassword && password !== ''
+        };
+    }
+
+    // 5. Función para actualizar íconos de validación
+    function updateCheckIcon(element, isValid) {
+        const icon = element.querySelector('i');
+        if (isValid) {
+            icon.className = 'ri-checkbox-circle-fill align-middle text-success';
+            element.classList.remove('text-muted');
+            element.classList.add('text-success');
+        } else {
+            icon.className = 'ri-checkbox-blank-circle-line align-middle';
+            element.classList.remove('text-success');
+            element.classList.add('text-muted');
+        }
+    }
+
+    // 6. Función para actualizar toda la validación
+    function updateValidation() {
+        const nuevaPassword = nuevaContraseniaInput.value;
+        const confirmPassword = confirmarContraseniaInput.value;
+        
+        // Validar fortaleza de contraseña
+        const passwordValidation = validatePassword(nuevaPassword);
+        
+        // Validar coincidencia
+        const matchValidation = validatePasswordMatch(nuevaPassword, confirmPassword);
+        
+        // Actualizar íconos
+        updateCheckIcon(uppercaseCheck, passwordValidation.hasUppercase);
+        updateCheckIcon(numberCheck, passwordValidation.hasNumber);
+        updateCheckIcon(specialCheck, passwordValidation.hasSpecial);
+        updateCheckIcon(passwordMatchCheck, matchValidation.matches);
+        
+        // Habilitar/deshabilitar botón
+        const isValid = passwordValidation.isValid && matchValidation.isValid;
+        submitBtn.disabled = !isValid;
+        
+        if (isValid) {
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-success');
+        } else {
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-secondary');
+        }
+    }
+
+    // 7. Escuchar cambios en ambos campos
+    nuevaContraseniaInput.addEventListener('input', updateValidation);
+    confirmarContraseniaInput.addEventListener('input', updateValidation);
+
+    // 8. Validar al enviar el formulario
+    resetForm.addEventListener('submit', function (event) {
+        const nuevaPassword = nuevaContraseniaInput.value;
+        const confirmPassword = confirmarContraseniaInput.value;
+        
+        const passwordValidation = validatePassword(nuevaPassword);
+        const matchValidation = validatePasswordMatch(nuevaPassword, confirmPassword);
+        
+        if (!passwordValidation.isValid) {
+            event.preventDefault();
+            alert('La contraseña debe contener al menos:\n• Una letra mayúscula\n• Un número\n• Un signo especial ( # $ % & *)');
+            nuevaContraseniaInput.focus();
+            return;
+        }
+        
+        if (!matchValidation.isValid) {
+            event.preventDefault();
+            alert('Las contraseñas no coinciden. Por favor verifica.');
+            confirmarContraseniaInput.focus();
+            return;
+        }
+    });
+
+    // 9. Validación inicial
+    updateValidation();
+});
+</script>

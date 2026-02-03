@@ -1,7 +1,10 @@
-﻿using Farmaceutica.Core.DTOs;
+﻿using Farmaceutica.Application.IServices;
+using Farmaceutica.Core.DTOs;
 using Farmaceutica.Core.Entities;
 using Farmaceutica.Core.Enums;
 using Farmaceutica.Core.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +16,16 @@ namespace Farmaceutica.Application.Services
     public class VentaService
     {
         private readonly IventaRepository _ventaRepository;
+        private readonly ILogger<VentaService> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IClienteRepository _clienteRepository;
 
-        public VentaService(IventaRepository ventaRepository)
+        public VentaService(IventaRepository ventaRepository, ILogger<VentaService> logger, IServiceProvider serviceProvider, IClienteRepository clienteRepository)
         {
             _ventaRepository = ventaRepository;
+            _logger = logger;
+            _serviceProvider = serviceProvider;
+            _clienteRepository = clienteRepository;
         }
 
         public async Task<int> GuardarDetalleAsync(int usuId)
@@ -116,13 +125,73 @@ namespace Farmaceutica.Application.Services
             if (venta.DetalleVentas == null || !venta.DetalleVentas.Any())
                 throw new ArgumentException("La venta debe tener al menos un producto.");
 
+            // Calcular montos
             venta.Subtotal = venta.DetalleVentas.Sum(d => d.TotalVenta);
-            venta.Igv = venta.Subtotal * 0.12m; // Ejemplo: 12% IGV
+            venta.Igv = venta.Subtotal * 0.12m; // 12% IGV
             venta.Total = venta.Subtotal + venta.Igv;
             venta.FechaCreacion = DateTime.Now;
             venta.TipoVenta = TipoVenta.Web;
 
+            // Guardar la venta en la base de datos
             await _ventaRepository.RegistrarVentaAsync(venta);
+
+            // Enviar factura por correo
+            await SendInvoiceForVentaAsync(venta);
+        }
+
+        private async Task SendInvoiceForVentaAsync(Venta venta)
+        {
+            try
+            {
+                if (!venta.ClienteId.HasValue)
+                {
+                    _logger.LogWarning("⚠️ Venta #{VentaId} no tiene ClienteId asociado", venta.Id);
+                    return;
+                }
+                // Obtener información del cliente usando el repositorio
+                var cliente = await _clienteRepository.GetByIdAsync(venta.ClienteId.Value);
+
+                // Validar que el cliente existe
+                if (cliente == null)
+                {
+                    _logger.LogWarning("⚠️ Cliente no encontrado para venta #{VentaId}", venta.Id);
+                    return; // O manejar de otra forma
+                }
+
+                // Usar los datos del cliente obtenido
+                var clienteEmail = cliente.Email ?? venta.CliCorreo ?? "cliente@ejemplo.com";
+                var clienteNombre = cliente.Nombre ?? "Cliente";
+
+                // Obtener el servicio de email
+                var emailService = _serviceProvider.GetRequiredService<IEmailService>();
+
+                await emailService.SendInvoiceEmailAsync(venta, clienteEmail, clienteNombre);
+
+                _logger.LogInformation("📧 Factura enviada para venta #{VentaId}", venta.Id);
+            }
+            catch (Exception ex)
+            {
+                // No lanzar excepción para no afectar el proceso de venta
+                _logger.LogError(ex, "⚠️ Error enviando factura para venta #{VentaId}", venta.Id);
+
+                // Opcional: Guardar en una cola de reintentos
+                await QueueFailedInvoiceEmailAsync(venta, ex.Message);
+            }
+        }
+
+        // Método opcional para manejar fallos
+        private async Task QueueFailedInvoiceEmailAsync(Venta venta, string error)
+        {
+            try
+            {
+                // Aquí podrías guardar en una tabla para reintentos
+                // Ejemplo: _context.FailedEmails.Add(new FailedEmail { ... });
+                _logger.LogWarning("📧 Factura pendiente para venta #{VentaId}: {Error}", venta.Id, error);
+            }
+            catch
+            {
+                // Silent fail
+            }
         }
 
     }

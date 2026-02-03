@@ -446,6 +446,73 @@ $(document).on("click", "#btnremovephoto", function () {
     );
 });
 
+
+$('#btnDescargar').click(function (e) {
+    e.preventDefault();
+
+    Swal.fire({
+        title: 'Descargando Formato',
+        html: `
+            <div class="text-center py-4">
+                <div class="download-animation">
+                    <i class="ri-download-cloud-2-line" style="font-size: 60px; color: #0d6efd;"></i>
+                    <div class="pulse-ring"></div>
+                </div>
+                <p class="mt-3 mb-0">Tu archivo se está preparando</p>
+                <p class="text-muted small">Formato_Importacion_Productos.xlsx</p>
+            </div>
+        `,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+            setTimeout(() => {
+                // Descargar archivo
+                const link = document.createElement('a');
+                link.href = $(this).attr('href');
+                link.download = $(this).attr('download');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Mostrar éxito con confetti
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Listo! 🎉',
+                    text: 'Formato descargado correctamente',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#0d6efd',
+                    backdrop: true
+                });
+            }, 2000);
+        }
+    });
+});
+
+// Agrega este CSS para la animación
+const style = document.createElement('style');
+style.textContent = `
+    .download-animation {
+        position: relative;
+        display: inline-block;
+    }
+    .pulse-ring {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 2px solid #0d6efd;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(0.8); opacity: 1; }
+        100% { transform: scale(1.5); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
 init();
 
 

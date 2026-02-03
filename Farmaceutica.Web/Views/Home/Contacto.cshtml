@@ -40,18 +40,22 @@
 
             <div class="col-lg-8">
                 <div>
-                    <form>
+                    <form method="post" action="@Url.Action("Enviar", "Home")">
+                        @Html.AntiForgeryToken()
+
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="mb-4">
-                                    <label for="name" class="form-label fs-13">Nombre</label>
-                                    <input name="name" id="name" type="text" class="form-control bg-light border-light" placeholder="Tu nombre*">
+                                    <label for="Nombre" class="form-label fs-13">Nombre</label>
+                                    <input name="Name" id="Name" type="text" class="form-control bg-light border-light"
+                                           placeholder="Tu nombre*" required>
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="mb-4">
-                                    <label for="email" class="form-label fs-13">Correo electrónico</label>
-                                    <input name="email" id="email" type="email" class="form-control bg-light border-light" placeholder="Tu correo*">
+                                    <label for="Email" class="form-label fs-13">Correo electrónico</label>
+                                    <input name="Email" id="Email" type="email" class="form-control bg-light border-light"
+                                           placeholder="Tu correo*" required>
                                 </div>
                             </div>
                         </div>
@@ -59,8 +63,9 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="mb-4">
-                                    <label for="subject" class="form-label fs-13">Asunto</label>
-                                    <input type="text" class="form-control bg-light border-light" id="subject" name="subject" placeholder="Tu asunto..." />
+                                    <label for="Asunto" class="form-label fs-13">Asunto</label>
+                                    <input type="text" class="form-control bg-light border-light" id="Subject"
+                                           name="Subject" placeholder="Tu asunto..." required />
                                 </div>
                             </div>
                         </div>
@@ -68,15 +73,18 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="mb-3">
-                                    <label for="comments" class="form-label fs-13">Mensaje</label>
-                                    <textarea name="comments" id="comments" rows="3" class="form-control bg-light border-light" placeholder="Tu mensaje..."></textarea>
+                                    <label for="Mensaje" class="form-label fs-13">Mensaje</label>
+                                    <textarea name="Comments" id="Comments" rows="3" class="form-control bg-light border-light"
+                                              placeholder="Tu mensaje..." required></textarea>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-lg-12 text-end">
-                                <input type="submit" id="submit" name="send" class="submitBnt btn btn-primary" value="Enviar Mensaje">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Enviar Mensaje
+                                </button>
                             </div>
                         </div>
                     </form>

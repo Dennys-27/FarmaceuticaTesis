@@ -107,6 +107,8 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
+app.UseStaticFiles();
+
 // Después de 'var app = builder.Build();'
 try
 {

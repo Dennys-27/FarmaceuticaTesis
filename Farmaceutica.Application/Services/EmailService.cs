@@ -1,4 +1,5 @@
 ﻿using Farmaceutica.Application.IServices;
+using Farmaceutica.Core;
 using Farmaceutica.Core.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -318,5 +319,292 @@ namespace Farmaceutica.Application.Services
 
             await smtpClient.SendMailAsync(mailMessage);
         }
+
+        public async Task SendContactEmailAsync(ContactoViewModel model)
+        {
+            _logger.LogInformation("📧 Enviando correo de contacto de: {Nombre} ({Email})", model.Name, model.Email);
+
+            try
+            {
+                // Construir URL para posible respuesta
+                var request = _httpContextAccessor.HttpContext?.Request;
+                var host = request?.Host.ToString() ?? "localhost:7101";
+                var scheme = request?.Scheme ?? "https";
+                var adminUrl = $"{scheme}://{host}/Admin/Contactos";
+
+                // Crear mensaje
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName),
+                    Subject = $"📧 Contacto Web: {model.Subject}",
+                    Body = $@"
+                <div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;'>
+                    <div style='background: linear-gradient(135deg, #2196F3, #1976D2); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;'>
+                        <h2 style='margin: 0;'>📧 Nuevo Mensaje de Contacto</h2>
+                        <p style='margin: 5px 0 0 0; opacity: 0.9;'>Farmacia La Puna</p>
+                    </div>
+                    <div style='background-color: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
+                        <div style='margin-bottom: 15px;'>
+                            <div style='font-weight: bold; color: #555; margin-bottom: 5px;'>👤 Nombre:</div>
+                            <div style='padding: 8px; background-color: white; border-radius: 4px; border: 1px solid #ddd;'>
+                                {WebUtility.HtmlEncode(model.Name)}
+                            </div>
+                        </div>
+                        
+                        <div style='margin-bottom: 15px;'>
+                            <div style='font-weight: bold; color: #555; margin-bottom: 5px;'>📧 Email:</div>
+                            <div style='padding: 8px; background-color: white; border-radius: 4px; border: 1px solid #ddd;'>
+                                <a href='mailto:{WebUtility.HtmlEncode(model.Email)}' style='color: #2196F3; text-decoration: none;'>
+                                    {WebUtility.HtmlEncode(model.Email)}
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div style='margin-bottom: 15px;'>
+                            <div style='font-weight: bold; color: #555; margin-bottom: 5px;'>📝 Asunto:</div>
+                            <div style='padding: 8px; background-color: white; border-radius: 4px; border: 1px solid #ddd;'>
+                                {WebUtility.HtmlEncode(model.Subject)}
+                            </div>
+                        </div>
+                        
+                        <div style='margin-bottom: 20px;'>
+                            <div style='font-weight: bold; color: #555; margin-bottom: 5px;'>💬 Mensaje:</div>
+                            <div style='padding: 15px; background-color: #f0f8ff; border-radius: 5px; border-left: 4px solid #2196F3; white-space: pre-line;'>
+                                {WebUtility.HtmlEncode(model.Comments)}
+                            </div>
+                        </div>
+                        
+                        <hr style='border: none; border-top: 2px solid #eee; margin: 20px 0;'>
+                        
+                        <div style='font-size: 12px; color: #777;'>
+                            <p>🕐 <strong>Fecha y hora:</strong> {DateTime.Now.ToString("dd/MM/yyyy HH:mm")}</p>
+                            <p>🌐 <strong>IP del remitente:</strong> {_httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress}</p>
+                            <p>🔗 <strong>Ver en administración:</strong> <a href='{adminUrl}'>{adminUrl}</a></p>
+                        </div>
+                        
+                        <div style='margin-top: 25px; padding: 12px; background-color: #e8f5e9; border-radius: 5px; border-left: 4px solid #4CAF50;'>
+                            <p style='margin: 0; font-size: 13px; color: #2e7d32;'>
+                                📌 <strong>Acción requerida:</strong> Responde este mensaje dentro de las próximas 24 horas.
+                            </p>
+                        </div>
+                    </div>
+                </div>",
+                    IsBodyHtml = true
+                };
+
+                // Enviar a la dirección configurada (puede ser el mismo sender)
+                mailMessage.To.Add(_emailSettings.SenderEmail);
+
+                // Configurar cliente SMTP para Gmail
+                using var smtpClient = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.Port)
+                {
+                    EnableSsl = _emailSettings.EnableSsl,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_emailSettings.UserName, _emailSettings.Password),
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    Timeout = 30000 // 30 segundos
+                };
+
+                // Configurar TLS 1.2 (requerido por Gmail)
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                _logger.LogInformation("🚀 Enviando correo de contacto via Gmail SMTP...");
+                await smtpClient.SendMailAsync(mailMessage);
+                _logger.LogInformation("✅ Correo de contacto enviado exitosamente de: {Email}", model.Email);
+            }
+            catch (SmtpException smtpEx)
+            {
+                _logger.LogError(smtpEx, "❌ Error SMTP al enviar correo de contacto de {Email}", model.Email);
+
+                // Mensajes específicos para errores comunes de Gmail
+                string errorMessage = smtpEx.Message.ToLower();
+                if (errorMessage.Contains("authentication failed") || errorMessage.Contains("5.7.8"))
+                {
+                    throw new Exception("❌ Error de autenticación Gmail. Verifica la configuración del correo.");
+                }
+                else if (errorMessage.Contains("timed out"))
+                {
+                    throw new Exception("❌ Timeout al conectar con Gmail. Verifica tu conexión a internet.");
+                }
+                else
+                {
+                    throw new Exception($"❌ Error SMTP al enviar contacto: {smtpEx.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error general al enviar correo de contacto de {Email}", model.Email);
+
+                // Registrar datos del contacto para seguimiento manual
+                _logger.LogInformation("📝 CONTACTO FALLBACK - Nombre: {Nombre}, Email: {Email}, Asunto: {Asunto}",
+                    model.Name, model.Email, model.Subject);
+                _logger.LogInformation("📝 Mensaje: {Mensaje}", model.Comments);
+
+                throw new Exception($"No se pudo enviar el mensaje de contacto. Por favor, intenta nuevamente más tarde.");
+            }
+        }
+
+
+
+        public async Task SendInvoiceEmailAsync(Venta venta, string clienteEmail, string clienteNombre)
+        {
+            _logger.LogInformation("🧾 Enviando factura de venta #{IdVenta} a: {Email}", venta.Id, clienteEmail);
+
+            try
+            {
+                // Obtener detalles completos de la venta
+                var detalles = venta.DetalleVentas ?? new List<DetalleVenta>();
+
+                // Crear tabla HTML de productos
+                var productosHtml = string.Empty;
+                var contador = 1;
+
+                foreach (var detalle in detalles)
+                {
+                    productosHtml += $@"
+                <tr>
+                    <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: center;'>{contador++}</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #eee;'>{WebUtility.HtmlEncode(detalle.Producto?.Nombre ?? "Producto")}</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: center;'>{detalle.Cantidad}</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>S/. {detalle.Precio:F2}</td>
+                    <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>S/. {detalle.TotalVenta:F2}</td>
+                </tr>";
+                }
+
+                // Generar número de factura (ejemplo: FACT-001-2024)
+                var numeroFactura = $"FACT-{venta.Id.ToString("D3")}-{DateTime.Now.Year}";
+
+                var subject = $"🧾 Factura #{numeroFactura} - Farmacia La Puna";
+                var body = $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f9f9f9; }}
+                    .invoice-container {{ max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }}
+                    .invoice-header {{ background: linear-gradient(135deg, #2196F3, #1976D2); color: white; padding: 30px; }}
+                    .invoice-body {{ padding: 30px; }}
+                    .invoice-footer {{ background-color: #f5f5f5; padding: 20px; text-align: center; color: #666; }}
+                    .company-info {{ margin-bottom: 30px; }}
+                    .client-info {{ margin-bottom: 30px; background-color: #f8f9fa; padding: 20px; border-radius: 5px; }}
+                    .invoice-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+                    .invoice-table th {{ background-color: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }}
+                    .invoice-table td {{ padding: 10px; border-bottom: 1px solid #eee; }}
+                    .totals {{ margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 5px; }}
+                    .total-row {{ display: flex; justify-content: space-between; padding: 8px 0; }}
+                    .total-amount {{ font-weight: bold; font-size: 18px; color: #1976D2; }}
+                    .status-badge {{ display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; }}
+                    .status-paid {{ background-color: #e8f5e9; color: #2e7d32; }}
+                    .qrcode {{ text-align: center; margin: 20px 0; }}
+                </style>
+            </head>
+            <body>
+                <div class='invoice-container'>
+                    <div class='invoice-header'>
+                        <div style='display: flex; justify-content: space-between; align-items: center;'>
+                            <div>
+                                <h1 style='margin: 0; font-size: 28px;'>FACTURA</h1>
+                                <p style='margin: 5px 0 0 0; opacity: 0.9;'>Farmacia La Puna</p>
+                            </div>
+                            <div style='text-align: right;'>
+                                <h2 style='margin: 0;'>#{numeroFactura}</h2>
+                                <p style='margin: 5px 0 0 0;'>{venta.FechaCreacion:dd/MM/yyyy HH:mm}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class='invoice-body'>
+                        <div class='company-info'>
+                            <h3>Farmacia La Puna</h3>
+                            <p>RUC: 20123456789</p>
+                            <p>Av. Principal 123, Lima, Perú</p>
+                            <p>Teléfono: (01) 234-5678 | Email: info@farmacialapuna.com</p>
+                        </div>
+                        
+                        <div class='client-info'>
+                            <h4>Cliente</h4>
+                            <p><strong>Nombre:</strong> {WebUtility.HtmlEncode(clienteNombre)}</p>
+                            <p><strong>Email:</strong> {WebUtility.HtmlEncode(clienteEmail)}</p>
+                            <p><strong>Fecha:</strong> {venta.FechaCreacion:dd/MM/yyyy HH:mm}</p>
+                            <p><strong>Estado:</strong> <span class='status-badge status-paid'>✅ PAGADO</span></p>
+                        </div>
+                        
+                        <h3>Detalles de la Compra</h3>
+                        <table class='invoice-table'>
+                            <thead>
+                                <tr>
+                                    <th style='width: 5%;'>#</th>
+                                    <th style='width: 40%;'>Producto</th>
+                                    <th style='width: 15%; text-align: center;'>Cantidad</th>
+                                    <th style='width: 20%; text-align: right;'>Precio Unit.</th>
+                                    <th style='width: 20%; text-align: right;'>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {productosHtml}
+                            </tbody>
+                        </table>
+                        
+                        <div class='totals'>
+                            <div class='total-row'>
+                                <span>Subtotal:</span>
+                                <span>S/. {venta.Subtotal:F2}</span>
+                            </div>
+                            <div class='total-row'>
+                                <span>IGV (12%):</span>
+                                <span>S/. {venta.Igv:F2}</span>
+                            </div>
+                            <div class='total-row total-amount'>
+                                <span>TOTAL A PAGAR:</span>
+                                <span>S/. {venta.Total:F2}</span>
+                            </div>
+                        </div>
+                        
+                        <div class='qrcode'>
+                            <p>📱 Escanear para verificar factura</p>
+                            <!-- Aquí podrías generar un QR con el número de factura -->
+                            <div style='background-color: #f0f0f0; padding: 10px; display: inline-block;'>
+                                FACTURA #{numeroFactura}
+                            </div>
+                        </div>
+                        
+                        <div style='margin-top: 30px; padding: 15px; background-color: #e3f2fd; border-radius: 5px;'>
+                            <h4>📋 Información Importante</h4>
+                            <ul style='font-size: 14px;'>
+                                <li>Esta factura es un comprobante electrónico válido.</li>
+                                <li>Conserve este documento para cualquier reclamo o garantía.</li>
+                                <li>Para consultas: contacto@farmacialapuna.com</li>
+                                <li>Tiempo estimado de entrega: 24-48 horas hábiles.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class='invoice-footer'>
+                        <p style='margin: 0;'>¡Gracias por su compra! 🛒</p>
+                        <p style='margin: 5px 0 0 0; font-size: 12px;'>Farmacia La Puna © {DateTime.Now.Year} | Su salud es nuestra prioridad</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+                await SendEmailAsync(clienteEmail, subject, body);
+                _logger.LogInformation("✅ Factura enviada exitosamente a: {Email}", clienteEmail);
+
+                // También enviar copia a administración
+                await SendEmailAsync(_emailSettings.SenderEmail, $"📋 Copia - Factura #{numeroFactura}", body);
+                _logger.LogInformation("📋 Copia de factura enviada a administración");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error enviando factura de venta #{IdVenta}", venta.Id);
+                throw new Exception($"Error al enviar la factura: {ex.Message}", ex);
+            }
+        }
+
     }
+
+
+
+
 }
