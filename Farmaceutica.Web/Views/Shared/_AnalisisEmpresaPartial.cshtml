@@ -1,0 +1,203 @@
+﻿@model Farmaceutica.Core.DTOs.DashboardData
+@{
+    var periodos = new[] { "ALL", "1M", "6M", "1Y" };
+    var periodoActual = ViewBag.PeriodoActual ?? "1Y";
+}
+
+<div class="card">
+    <div class="card-header border-0 align-items-center d-flex">
+        <h4 class="card-title mb-0 flex-grow-1">Análisis de la Empresa</h4>
+        <div>
+            @foreach (var periodo in periodos)
+            {
+                <button type="button"
+                        class="btn btn-soft-@(periodoActual == periodo ? "primary" : "secondary") btn-sm periodo-btn"
+                        data-periodo="@periodo">
+                    @periodo
+                </button>
+            }
+        </div>
+    </div><!-- end card header -->
+
+    <div class="card-header p-0 border-0 bg-soft-light">
+        <div class="row g-0 text-center">
+            <!-- Pedidos Web -->
+            <div class="col-6 col-sm-3">
+                <div class="p-3 border border-dashed border-start-0">
+                    <h5 class="mb-1">
+                        <span class="counter-value" data-target="@Model.TotalOrdenes">0</span>
+                    </h5>
+                    <p class="text-muted mb-0">Pedidos Web</p>
+                </div>
+            </div>
+
+            <!-- Ventas Farmacia -->
+            <div class="col-6 col-sm-3">
+                <div class="p-3 border border-dashed border-start-0">
+                    <h5 class="mb-1">
+                        <span class="counter-value" data-target="@Model.TotalVentasLocales">0</span>
+                    </h5>
+                    <p class="text-muted mb-0">Ventas Farmacia</p>
+                </div>
+            </div>
+
+            <!-- Ingresos Totales -->
+            <div class="col-6 col-sm-3">
+                <div class="p-3 border border-dashed border-start-0">
+                    <h5 class="mb-1">
+                        S/ <span class="counter-value" data-target="@Model.IngresosTotales.ToString("F2")">0</span>
+                    </h5>
+                    <p class="text-muted mb-0">Ingresos Totales</p>
+                </div>
+            </div>
+
+            <!-- Ganancia Neta -->
+            <div class="col-6 col-sm-3">
+                <div class="p-3 border border-dashed border-start-0 border-end-0">
+                    <h5 class="mb-1 @(Model.GananciaNeta >= 0 ? "text-success" : "text-danger")">
+                        S/ <span class="counter-value" data-target="@Model.GananciaNeta.ToString("F2")">0</span>
+                    </h5>
+                    <p class="text-muted mb-0">Ganancia Neta</p>
+                </div>
+            </div>
+        </div>
+    </div><!-- end card header -->
+
+    <div class="card-body p-0 pb-2">
+        <div class="w-100">
+            <div id="dashboard_chart" data-colors='["--vz-primary", "--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
+        </div>
+    </div><!-- end card body -->
+</div><!-- end card -->
+
+<script>
+    // Solo inicializar si no se ha inicializado antes
+    if (!window.dashboardChartInitialized) {
+        window.dashboardChartInitialized = true;
+
+        $(document).ready(function() {
+            // Inicializar contadores
+            iniciarContadoresAnimados();
+
+            // Inicializar gráfico si hay datos
+            var datosMensuales = @Html.Raw(ViewBag.DatosMensualesJson ?? "null");
+            if (datosMensuales && datosMensuales.length > 0) {
+                inicializarGrafico(datosMensuales);
+            }
+
+            // Manejar clic en botones de período
+            $('.periodo-btn').on('click', function() {
+                var periodo = $(this).data('periodo');
+                actualizarAnalisis(periodo);
+            });
+        });
+    }
+
+    function actualizarAnalisis(periodo) {
+        var container = $('#analisis-empresa-container');
+        container.addClass('loading');
+
+        // Actualizar botones
+        $('.periodo-btn').removeClass('btn-soft-primary').addClass('btn-soft-secondary');
+        $(event.currentTarget).removeClass('btn-soft-secondary').addClass('btn-soft-primary');
+
+        $.ajax({
+            url: '@Url.Action("ObtenerAnalisisPartial", "Dashboard")',
+            type: 'GET',
+            data: { periodo: periodo },
+            success: function(response) {
+                container.html(response);
+            },
+            error: function() {
+                container.html('<div class="alert alert-danger">Error al actualizar</div>');
+            },
+            complete: function() {
+                container.removeClass('loading');
+            }
+        });
+    }
+
+    function iniciarContadoresAnimados() {
+        $('.counter-value').each(function() {
+            var $this = $(this);
+            var target = parseFloat($this.data('target'));
+            var current = 0;
+            var increment = target / 100;
+
+            var timer = setInterval(function() {
+                if (current < target) {
+                    current += increment;
+                    if (current > target) current = target;
+                    $this.text(target % 1 === 0 ? Math.floor(current) : current.toFixed(2));
+                } else {
+                    clearInterval(timer);
+                }
+            }, 10);
+        });
+    }
+
+    function inicializarGrafico(datos) {
+        var options = {
+            series: [{
+                name: 'Ingresos',
+                type: 'column',
+                data: datos.map(d => d.ingresos)
+            }, {
+                name: 'Egresos',
+                type: 'column',
+                data: datos.map(d => d.egresos)
+            }, {
+                name: 'Ganancia',
+                type: 'line',
+                data: datos.map(d => d.ganancia)
+            }],
+            chart: {
+                height: 350,
+                type: 'line',
+                stacked: false
+            },
+            stroke: {
+                width: [0, 0, 3]
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '50%'
+                }
+            },
+            colors: ['#0ab39c', '#f06548', '#405189'],
+            xaxis: {
+                categories: datos.map(d => d.mes)
+            },
+            yaxis: {
+                title: {
+                    text: 'Monto (S/)'
+                },
+                labels: {
+                    formatter: function(val) {
+                        return 'S/ ' + val.toFixed(2);
+                    }
+                }
+            }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#dashboard_chart"), options);
+        chart.render();
+    }
+</script>
+
+<style>
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+        position: relative;
+    }
+
+        .loading:after {
+            content: "Cargando...";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--vz-primary);
+        }
+</style>

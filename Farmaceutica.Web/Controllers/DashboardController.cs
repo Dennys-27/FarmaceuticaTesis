@@ -27,6 +27,40 @@ namespace Farmaceutica.Web.Controllers
             try
             {
                 var dashboardData = await _dashboardService.GetFullDashboardAsync();
+
+                // NUEVO: Obtener datos de análisis de empresa
+                try
+                {
+                    // Obtener el servicio de análisis
+                    var analisisService = HttpContext.RequestServices.GetService<IDashboardRepository>();
+                    if (analisisService != null)
+                    {
+                        var analisisData = await analisisService.ObtenerDashboardDataAsync("1Y");
+
+                        // Pasar al ViewBag para usar en la vista
+                        ViewBag.AnalisisEmpresa = analisisData;
+                        ViewBag.PeriodoActual = "1Y";
+                        ViewBag.Periodos = new[] { "ALL", "1M", "6M", "1Y" };
+
+                        // Convertir datos mensuales a JSON para JavaScript
+                        if (analisisData.DatosMensuales != null)
+                        {
+                            ViewBag.DatosMensualesJson = System.Text.Json.JsonSerializer.Serialize(
+                                analisisData.DatosMensuales,
+                                new System.Text.Json.JsonSerializerOptions
+                                {
+                                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                                }
+                            );
+                        }
+                    }
+                }
+                catch (Exception analisisEx)
+                {
+                    _logger.LogWarning(analisisEx, "No se pudieron cargar datos de análisis de empresa");
+                    // No fallar el dashboard principal por esto
+                }
+
                 return View(dashboardData);
             }
             catch (Exception ex)
@@ -184,5 +218,48 @@ namespace Farmaceutica.Web.Controllers
             });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ObtenerAnalisisPartial(string periodo = "1Y")
+        {
+            try
+            {
+                if (_repository == null)
+                {
+                    return Content("<div class='alert alert-warning'>Servicio no disponible</div>");
+                }
+
+                // USA EL MÉTODO CORRECTO
+                var data = await _repository.ObtenerDashboardDataAsync(periodo);
+                ViewBag.PeriodoActual = periodo;
+
+                return PartialView("_AnalisisEmpresaPartial", data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en ObtenerAnalisisPartial");
+                return Content($"<div class='alert alert-danger'>Error: {ex.Message}</div>");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerDatosGrafico(string periodo = "1Y")
+        {
+            try
+            {
+                if (_repository == null)
+                {
+                    return Json(new { error = "Servicio no disponible" });
+                }
+
+                // USA EL MÉTODO CORRECTO
+                var data = await _repository.ObtenerDatosMensualesAsync(periodo);
+                return Json(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en ObtenerDatosGrafico");
+                return Json(new { error = ex.Message });
+            }
+        }
     }
 }

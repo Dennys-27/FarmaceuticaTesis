@@ -26,5 +26,7 @@ namespace Farmaceutica.Core.DTOs
         public string? PrimerNombre { get; set; } // Cambia a nullable
         public string? SegundoNombre { get; set; }
         public string? Imagen { get; set; }
+
+        public string? TelefonoDelivery { get; set; }
     }
 }

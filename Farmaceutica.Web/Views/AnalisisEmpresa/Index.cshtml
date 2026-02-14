@@ -1,0 +1,160 @@
+﻿@model Farmaceutica.Core.DTOs.DashboardData;
+@{
+    ViewData["Title"] = "Análisis de la Empresa";
+    Layout = "_Layout"; // O el layout que uses
+}
+
+<div class="container-fluid">
+    <!-- Enlace de regreso al dashboard principal -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="@Url.Action("Index", "Dashboard")" class="btn btn-soft-primary">
+                <i class="ri-arrow-left-line"></i> Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Contenedor del análisis -->
+    <div class="row">
+        <div class="col-12">
+            <div id="analisis-empresa-container">
+                @await Html.PartialAsync("_AnalisisEmpresaPartial", Model)
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Datos iniciales
+        var datosMensuales = @Html.Raw(ViewBag.DatosMensualesJson);
+        var chartInstance = null;
+
+        $(document).ready(function() {
+            // Inicializar si hay datos
+            if (datosMensuales && datosMensuales.length > 0) {
+                inicializarGrafico(datosMensuales);
+                iniciarContadoresAnimados();
+            }
+
+            // Evento para botones de período
+            $(document).on('click', '.periodo-btn', function() {
+                var periodo = $(this).data('periodo');
+                actualizarAnalisis(periodo);
+            });
+        });
+
+        function actualizarAnalisis(periodo) {
+            $('#analisis-empresa-container').addClass('loading');
+
+            // Actualizar botones visualmente
+            $('.periodo-btn').removeClass('btn-soft-primary').addClass('btn-soft-secondary');
+            $(event.currentTarget).removeClass('btn-soft-secondary').addClass('btn-soft-primary');
+
+            // Cargar partial view
+            $.ajax({
+                url: '@Url.Action("ObtenerAnalisisEmpresaPartial", "Dashboard")',
+                data: { periodo: periodo },
+                success: function(response) {
+                    $('#analisis-empresa-container').html(response);
+
+                    // Actualizar gráfico
+                    $.getJSON('@Url.Action("ObtenerDatosAnalisisGrafico", "Dashboard")',
+                        { periodo: periodo },
+                        function(datos) {
+                            if (chartInstance) {
+                                actualizarGrafico(datos);
+                            } else {
+                                inicializarGrafico(datos);
+                            }
+                            iniciarContadoresAnimados();
+                        }
+                    );
+                },
+                error: function() {
+                    $('#analisis-empresa-container').html(
+                        '<div class="alert alert-danger">Error al actualizar datos</div>'
+                    );
+                },
+                complete: function() {
+                    $('#analisis-empresa-container').removeClass('loading');
+                }
+            });
+        }
+
+        // Funciones de gráfico (las mismas que antes)
+        function inicializarGrafico(datos) {
+            var options = {
+                series: [{
+                    name: 'Ingresos',
+                    type: 'column',
+                    data: datos.map(d => d.ingresos)
+                }, {
+                    name: 'Egresos',
+                    type: 'column',
+                    data: datos.map(d => d.egresos)
+                }, {
+                    name: 'Ganancia',
+                    type: 'line',
+                    data: datos.map(d => d.ganancia)
+                }],
+                chart: {
+                    height: 350,
+                    type: 'line',
+                    stacked: false
+                },
+                // ... configuración completa
+            };
+
+            chartInstance = new ApexCharts(document.querySelector("#dashboard_chart"), options);
+            chartInstance.render();
+        }
+
+        function actualizarGrafico(datos) {
+            chartInstance.updateSeries([
+                { data: datos.map(d => d.ingresos) },
+                { data: datos.map(d => d.egresos) },
+                { data: datos.map(d => d.ganancia) }
+            ]);
+            chartInstance.updateOptions({
+                xaxis: { categories: datos.map(d => d.mes) }
+            });
+        }
+
+        function iniciarContadoresAnimados() {
+            $('.counter-value').each(function() {
+                var $this = $(this);
+                var target = parseFloat($this.data('target'));
+                var current = 0;
+                var increment = target / 100;
+
+                var timer = setInterval(function() {
+                    if (current < target) {
+                        current += increment;
+                        if (current > target) current = target;
+                        $this.text(target % 1 === 0 ? Math.floor(current) : current.toFixed(2));
+                    } else {
+                        clearInterval(timer);
+                    }
+                }, 10);
+            });
+        }
+    </script>
+
+    <style>
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+
+            .loading:after {
+                content: "Cargando...";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: var(--vz-primary);
+            }
+    </style>
+}

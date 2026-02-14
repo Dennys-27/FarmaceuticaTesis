@@ -486,7 +486,7 @@ function guardaryeditar(e) {
                     showConfirmButton: false
                 }).then(() => {
                     // Recargar la lista de clientes
-                    recargarClientesConSeleccion(response.id);
+                    recargarProveedorConSeleccion(response.id);
                 });
 
             } else {
@@ -509,9 +509,9 @@ function guardaryeditar(e) {
     });
 }
 
-// Función mejorada para recargar clientes y seleccionar el nuevo
-function recargarClientesConSeleccion(nuevoClienteId) {
-    console.log("🔄 Recargando clientes, nuevo ID:", nuevoClienteId);
+// Función mejorada para recargar proveedores y seleccionar el nuevo
+function recargarProveedorConSeleccion(nuevoProveedorId) {
+    console.log("🔄 Recargando proveedores, nuevo ID:", nuevoProveedorId);
 
     $.ajax({
         url: "/Proveedor/ComboProveedores",
@@ -522,42 +522,42 @@ function recargarClientesConSeleccion(nuevoClienteId) {
             $('#prov_id').prop('disabled', true).next('.select2-container').addClass('select2-container-disabled');
         },
         success: function (data) {
-            console.log("✅ Clientes recargados:", data.length, "registros");
+            console.log("✅ Proveedores recargados:", data.length, "registros");
 
             // Limpiar select
             $('#prov_id').empty().append('<option value="0">Seleccione Proveedor</option>');
 
             // Agregar opciones
-            $.each(data, function (index, cliente) {
+            $.each(data, function (index, proveedor) {
                 $('#prov_id').append(
                     $('<option>', {
-                        value: cliente.id,
-                        text: cliente.nombre
+                        value: proveedor.id,
+                        text: proveedor.nombre
                     })
                 );
             });
 
-            // Seleccionar el nuevo cliente si existe
-            if (nuevoClienteId) {
+            // Seleccionar el nuevo proveedores si existe
+            if (nuevoProveedorId) {
                 // Esperar un momento para que Select2 se actualice
                 setTimeout(function () {
-                    $('#cli_id').val(nuevoClienteId).trigger('change.select2');
-                    console.log("✅ Nuevo cliente seleccionado:", nuevoClienteId);
+                    $('#prov_id').val(nuevoProveedorId).trigger('change.select2');
+                    console.log("✅ Nuevo Proveedores seleccionado:", nuevoProveedorId);
                 }, 300);
             }
 
-            // Cargar datos del cliente si se seleccionó
-            if (nuevoClienteId && nuevoClienteId != '0') {
+            // Cargar datos del proveedores si se seleccionó
+            if (nuevoProveedorId && nuevoProveedorId != '0') {
                 setTimeout(function () {
                     $('#cli_id').trigger('change');
                 }, 500);
             }
         },
         error: function (xhr, status, error) {
-            console.error("❌ Error al recargar clientes:", error);
+            console.error("❌ Error al recargar proveedores:", error);
             Swal.fire({
                 title: "Atención",
-                text: "El cliente se guardó, pero no se pudo actualizar la lista. Por favor refresque la página.",
+                text: "El proveedores se guardó, pero no se pudo actualizar la lista. Por favor refresque la página.",
                 icon: "warning",
                 timer: 3000
             });

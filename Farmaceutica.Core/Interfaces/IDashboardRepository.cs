@@ -16,5 +16,9 @@ namespace Farmaceutica.Core.Interfaces
         Task<List<DashboardVentaDTO>> ObtenerVentasRecientes();
 
         Task<List<DashboardPedidoDTO>> ObtenerPedidosPendientes();
+
+        Task<DashboardData> ObtenerDashboardDataAsync(string periodo);
+        Task<List<GraficoMensual>> ObtenerDatosMensualesAsync(string periodo);
+        Task<Dictionary<string, decimal>> ObtenerMetricasRapidasAsync();
     }
 }

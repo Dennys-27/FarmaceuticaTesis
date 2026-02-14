@@ -140,77 +140,80 @@ namespace Farmaceutica.Web.Controllers.Mantenimentos
 
                 var data = delivery.Select(u => new object[]
                 {
-                    // 0 - IMAGEN
-                    $"<div class='d-flex align-items-center'>" +
-                        $"<div class='flex-shrink-0 me-2'>" +
-                            $"<img src='/images/users/{(string.IsNullOrEmpty(u.Imagen) ? "usuario.png" : u.Imagen)}' class='avatar-xs rounded-circle'>" +
-                        $"</div>" +
-                    $"</div>",
+            // 0 - IMAGEN
+            $"<div class='d-flex align-items-center'>" +
+                $"<div class='flex-shrink-0 me-2'>" +
+                    $"<img src='/images/users/{(string.IsNullOrEmpty(u.Imagen) ? "usuario.png" : u.Imagen)}' class='avatar-xs rounded-circle'>" +
+                $"</div>" +
+            $"</div>",
 
-                    // 1 - CLIENTE
-                    u.Cliente,
+            // 1 - CLIENTE
+            u.Cliente,
 
-                    // 2 - METODO PAGO
-                    u.MetodoPago,
+            // 2 - METODO PAGO
+            u.MetodoPago,
 
-                    // 3 - TIPO VENTA
-                    u.TipoVenta,
+            // 3 - TIPO VENTA
+            u.TipoVenta,
 
-                    // 4
-                    u.CliCorreo,
+            // 4
+            u.CliCorreo,
 
-                    // 5
-                    u.CliDireccion,
+            // 5
+            u.CliDireccion,
 
-                    // 6
-                    u.CliRuc,
+            // 6
+            u.CliRuc,
 
-                    // 7
-                    u.Telefono,
+            // 7
+            u.Telefono,
 
-                    // 8
-                    u.Igv,
+            // 8
+            u.Igv,
 
-                    // 9
-                    u.Subtotal,
+            // 9
+            u.Subtotal,
 
-                    // 10
-                    u.Total,
+            // 10
+            u.Total,
 
-                    // 11 - ENCARGADO
-                    u.Encargado,
+            // 11 - ENCARGADO
+            u.Encargado,
 
-                    // 12 - DELIVERY
-                    u.Delivery,
+            // 12 - DELIVERY
+            u.Delivery,
 
-                    // 13 - FECHA COMPRA
-                    u.FechaCompra.ToString("yyyy-MM-dd"),
+            // 13 - FECHA COMPRA
+            u.FechaCompra.ToString("yyyy-MM-dd"),
 
-                    // 14 - FECHA ASIGNACION
-                    u.FechaAsignacion?.ToString("yyyy-MM-dd") ?? "",
+            // 14 - FECHA ASIGNACION
+            u.FechaAsignacion?.ToString("yyyy-MM-dd") ?? "",
 
-                    // 15 - FECHA ENTREGA
-                    u.FechaEntrega?.ToString("yyyy-MM-dd") ?? "",
+            // 15 - FECHA ENTREGA
+            u.FechaEntrega?.ToString("yyyy-MM-dd") ?? "",
 
-                    // 16 - ESTADO
-                    u.EstadoDelivery switch
-                    {
-                        "Pendiente" => "<span class='badge bg-warning'>Pendiente</span>",
-                        "Asignado" => "<span class='badge bg-info'>Asignado</span>",
-                        "EnCamino" => "<span class='badge bg-primary'>En Camino</span>",
-                        "Entregado" => "<span class='badge bg-success'>Entregado</span>",
-                        "Rechazado" => "<span class='badge bg-danger'>Rechazado</span>",
-                        _   => "<span class='badge bg-secondary'>Desconocido</span>"
-                    },
+            // 16 - ESTADO
+            u.EstadoDelivery switch
+            {
+                "Pendiente" => "<span class='badge bg-warning'>Pendiente</span>",
+                "Asignado" => "<span class='badge bg-info'>Asignado</span>",
+                "EnCamino" => "<span class='badge bg-primary'>En Camino</span>",
+                "Entregado" => "<span class='badge bg-success'>Entregado</span>",
+                "Rechazado" => "<span class='badge bg-danger'>Rechazado</span>",
+                _   => "<span class='badge bg-secondary'>Desconocido</span>"
+            },
 
-                    // 17 - ACCIONES (UNA SOLA COLUMNA)
-                    $"<button class='btn btn-info btn-icon me-1' onclick='verDetalle({u.Id})' title='Ver detalle'>" +
-                    "<i class='ri-eye-line'></i></button>" +
+            // 17 - ACCIONES (UNA SOLA COLUMNA)
+            $"<button class='btn btn-info btn-icon me-1' onclick='verDetalle({u.Id})' title='Ver detalle'>" +
+            "<i class='ri-eye-line'></i></button>" +
 
-                    $"<button class='btn btn-warning btn-icon' onclick='procesar({u.Id})' title='Asignar delivery'>" +
-                    "<i class='ri-truck-line'></i></button>"
+            // Botón condicional según estado
+            (u.EstadoDelivery == "Pendiente"
+                ? $"<button class='btn btn-warning btn-icon' onclick='procesar({u.Id})' title='Asignar delivery'>" +
+                  "<i class='ri-truck-line'></i></button>"
+                : $"<button class='btn btn-warning btn-icon' disabled title='Solo disponible para estado Pendiente'>" +
+                  "<i class='ri-truck-line'></i></button>")
                 }).ToList();
-
 
                 return Json(new
                 {
